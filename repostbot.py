@@ -69,11 +69,11 @@ def receive_image(bot: Bot, update: Update):
             update.message.reply_text(config.REPOST_ALERT_STRING)
             for i, repost_msg in enumerate(get_all_but_last_reposts(cid, image_hash)):
                 if i == 0:
-                    msg = "FIRST POSTED HERE"
+                    msg = config.REPOST_NOTIFIERS[0]
                 else:
-                    msg = "AND THEN HERE"
+                    msg = config.REPOST_NOTIFIERS[1]
                 bot.send_message(cid, msg, reply_to_message_id=repost_msg)
-            bot.send_message(cid, "REEEEEE ORIGINAL CONTENT PLEASE!!!!!!!!!!!!!!!!! AAAAAAAAAAAA",
+            bot.send_message(cid, config.REPOST_NOTIFIERS[2],
                              reply_to_message_id=message_id)
         else:
             print("picture is not repost")

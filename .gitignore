@@ -1,3 +1,7 @@
-groups/.git/__pycache__/.idea/
+groups/
+.git/
+__pycache__/
+.idea/
+
 config.py
 setup.py
