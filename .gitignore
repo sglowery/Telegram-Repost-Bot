@@ -3,4 +3,4 @@ groups/
 __pycache__/
 .idea/
 
-config.py
+bot_token.py

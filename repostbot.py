@@ -2,6 +2,7 @@ from imagehash import average_hash
 from PIL import Image
 from telegram import Bot, Update
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
+from bot_token import REPOST_BOT_TOKEN
 import os
 import json
 import config
@@ -95,7 +96,7 @@ def repost_bot_help(bot: Bot, update: Update):
 
 def main():
     check_directory()
-    updater = Updater(config.REPOST_BOT_TOKEN)
+    updater = Updater(REPOST_BOT_TOKEN)
     dp = updater.dispatcher
     dp.add_handler(MessageHandler(Filters.photo, receive_image))
     dp.add_handler(CommandHandler("help", repost_bot_help))
