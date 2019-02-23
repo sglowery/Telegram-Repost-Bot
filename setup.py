@@ -4,7 +4,7 @@ setup(
     name='reeepostbot',
     version='0.1',
     url='',
-    packages=['reeepostbot'],
+    modules=['repostbot', 'config_example'],
     license='GNU General Public License v3.0',
     author='Stephen',
     author_email='stephen.g.lowery@gmail.com',
