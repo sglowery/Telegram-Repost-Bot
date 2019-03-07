@@ -6,6 +6,5 @@ HELP_STRING = "I'm {name}. I analyze the pictures and URLs you send and call out
               "URLs in plaintext and a hash of the image to accomplish this."
 REPOST_NOTIFIERS = ["FIRST POSTED HERE", "AND THEN HERE",
                     "REEEEEE ORIGINAL CONTENT PLEASE {name}!!!!!!!!!!!!!!!!! AAAAAAAAAAAA"]
-TIME_BETWEEN_MESSAGES = 0.5  # seconds
 GROUP_REPOST_PATH = "groups/"
 DEFAULT_CALLOUT = {"url": False, "picture": True}
