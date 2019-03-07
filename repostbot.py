@@ -2,7 +2,7 @@ from imagehash import average_hash
 from PIL import Image
 from telegram import Bot, Update, ChatAction, MessageEntity
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
-from bot_token import TEST_REPOST_BOT_TOKEN
+from bot_token import REPOST_BOT_TOKEN
 from typing import Optional, List, NoReturn
 import os
 import json
@@ -146,7 +146,7 @@ def repost_bot_help(bot: Bot, update: Update) -> NoReturn:
 
 def main() -> NoReturn:
     check_directory()
-    updater = Updater(TEST_REPOST_BOT_TOKEN)
+    updater = Updater(REPOST_BOT_TOKEN)
     dp = updater.dispatcher
     dp.add_handler(MessageHandler(Filters.photo | Filters.entity("url"), receive_repostable))
     dp.add_handler(CommandHandler("toggle", toggle_tracking, pass_args=True))
