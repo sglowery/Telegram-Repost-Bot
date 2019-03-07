@@ -7,7 +7,6 @@ from typing import Optional, List, NoReturn
 import os
 import json
 import config
-import time
 
 
 # <group_id>.txt maps an image hash or url to a list of message ids that contain an image with that hash or url
@@ -91,14 +90,12 @@ def receive_repostable(bot: Bot, update: Update) -> NoReturn:
                 bot.send_message(cid, config.REPOST_ALERT_STRING, reply_to_message_id=mid)
                 for i, repost_msg in enumerate(get_all_but_last_reposts(cid, key)):
                     bot.send_chat_action(cid, ChatAction.TYPING)
-                    time.sleep(config.TIME_BETWEEN_MESSAGES)
                     if i == 0:
                         msg = config.REPOST_NOTIFIERS[0]
                     else:
                         msg = config.REPOST_NOTIFIERS[1]
                     bot.send_message(cid, msg, reply_to_message_id=repost_msg)
                 bot.send_chat_action(cid, ChatAction.TYPING)
-                time.sleep(config.TIME_BETWEEN_MESSAGES)
                 bot.send_message(cid, config.REPOST_NOTIFIERS[2].format(name=name.upper()))
 
 
