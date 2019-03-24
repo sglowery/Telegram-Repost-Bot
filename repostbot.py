@@ -1,6 +1,6 @@
 from imagehash import average_hash
 from PIL import Image
-from telegram import Bot, Update, ChatAction, MessageEntity
+from telegram import Bot, Update, ChatAction, MessageEntity, Message
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from bot_token import REPOST_BOT_TOKEN
 from typing import Optional, List, NoReturn
@@ -23,9 +23,14 @@ def is_repost(group_id: int, key: str, message_id: int) -> bool:
         print("new picture or url detected")
         group_reposts[key] = [message_id]
     else:
-        print("REPOST DETECTED REEEE")
-        group_reposts[key].append(message_id)
-        result = True
+        whitelist_data = group_reposts.get("whitelist", list())
+        if key not in whitelist_data:
+            print("REPOST DETECTED REEEE")
+            group_reposts[key].append(message_id)
+            result = True
+        else:
+            print("Key is whitelisted; doing nothing")
+        group_reposts["whitelist"] = whitelist_data
     with open(group_path, 'w') as f:
         json.dump(group_reposts, f, indent=2)
     return result
@@ -51,13 +56,13 @@ def ensure_group_file(cid: int) -> NoReturn:
             json.dump({"track": config.DEFAULT_CALLOUT}, f, indent=2)
 
 
-def get_keys(bot: Bot, update: Update) -> Optional[List[str]]:
+def get_keys(bot: Bot, message: Message) -> Optional[List[str]]:
     keys = list()
-    entities = update.message.parse_entities(types=[MessageEntity.URL])
-    with open(get_group_path(update.message.chat.id)) as f:
+    entities = message.parse_entities(types=[MessageEntity.URL])
+    with open(get_group_path(message.chat.id)) as f:
         group_toggles = json.load(f).get("track")
-    if update.message.photo and group_toggles["picture"]:
-        photo = update.message.photo[-1]
+    if message.photo and group_toggles["picture"]:
+        photo = message.photo[-1]
         photo_id = photo.file_id
         path = f"{photo_id}.jpg"
         print("getting file...")
@@ -69,7 +74,7 @@ def get_keys(bot: Bot, update: Update) -> Optional[List[str]]:
         return keys
     elif len(entities) and group_toggles["url"]:
         for entity in entities:
-            keys.append(str(update.message.text[entity.offset: entity.offset + entity.length]))
+            keys.append(str(message.text[entity.offset: entity.offset + entity.length]))
         return keys
     else:
         return None
@@ -80,9 +85,8 @@ def receive_repostable(bot: Bot, update: Update) -> NoReturn:
     chat_type = update.message.chat.type
     mid = update.message.message_id
     ensure_group_file(cid)
-    keys = get_keys(bot, update)
+    keys = get_keys(bot, update.message)
     if chat_type in ("private", "group") and update.message.forward_from is None and keys is not None:
-        # try:
         for key in keys:
             if is_repost(cid, key, mid):
                 name = update.message.from_user.first_name
@@ -97,6 +101,29 @@ def receive_repostable(bot: Bot, update: Update) -> NoReturn:
                     bot.send_message(cid, msg, reply_to_message_id=repost_msg)
                 bot.send_chat_action(cid, ChatAction.TYPING)
                 bot.send_message(cid, config.REPOST_NOTIFIERS[2].format(name=name.upper()))
+
+
+def whitelist(bot: Bot, update: Update) -> NoReturn:
+    cid = update.message.chat.id
+    reply_message = update.message.reply_to_message
+    if reply_message is None:
+        bot.send_message(cid, config.INVALID_WHITELIST_REPLY, reply_to_message_id=update.message.message_id)
+        return
+    else:
+        reply_id = reply_message.message_id
+    with open(get_group_path(cid)) as f:
+        group_data = json.load(f)
+    whitelist_data = group_data.get("whitelist", list())
+    keys = get_keys(bot, reply_message)
+    if keys is not None:
+        for key in keys:
+            whitelist_data.append(key)
+        group_data["whitelist"] = whitelist_data
+        with open(get_group_path(cid), 'w') as f:
+            json.dump(group_data, f)
+        bot.send_message(cid, config.SUCCESSFUL_WHITELIST_REPLY, reply_to_message_id=reply_id)
+    else:
+        bot.send_message(cid, config.INVALID_WHITELIST_REPLY, reply_to_message_id=update.message.message_id)
 
 
 def toggle_tracking(bot: Bot, update: Update, args: list) -> NoReturn:
@@ -149,6 +176,7 @@ def main() -> NoReturn:
     dp.add_handler(CommandHandler("toggle", toggle_tracking, pass_args=True))
     dp.add_handler(CommandHandler("help", repost_bot_help))
     dp.add_handler(CommandHandler("settings", display_toggle_settings))
+    dp.add_handler(CommandHandler("whitelist", whitelist))
     updater.start_polling()
     updater.idle()
 

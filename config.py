@@ -6,5 +6,8 @@ HELP_STRING = "I'm {name}. I analyze the pictures and URLs you send and call out
               "URLs in plaintext and a hash of the image to accomplish this."
 REPOST_NOTIFIERS = ["FIRST POSTED HERE", "AND THEN HERE",
                     "REEEEEE ORIGINAL CONTENT PLEASE {name}!!!!!!!!!!!!!!!!! AAAAAAAAAAAA"]
+INVALID_WHITELIST_REPLY = "Reply to a message containing a picture or URL you want whitelisted."
+ALREADY_WHITELISTED_REPLY = "That's already whitelisted!"
+SUCCESSFUL_WHITELIST_REPLY = "I won't track reposts of that from now on."
 GROUP_REPOST_PATH = "groups/"
 DEFAULT_CALLOUT = {"url": False, "picture": True}
