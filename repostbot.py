@@ -111,7 +111,7 @@ class RepostBot:
             cid = update.message.chat.id
             out = list()
             group_data = self._get_group_data(cid)
-            toggle_data = group_data.get("track", strings.DEFAULT_CALLOUT)
+            toggle_data = group_data.get("track", config.DEFAULT_CALLOUT)
             for arg in ("url", "picture"):
                 if arg in context.args:
                     toggle_data[arg] = not toggle_data[arg]
@@ -137,7 +137,7 @@ class RepostBot:
 
     # <group_id>.txt maps an image hash or url to a list of message ids that contain an image with that hash or url
     def _get_group_path(self, group_id):
-        return f"{strings.GROUP_REPOST_PATH}/{group_id}.json"
+        return f"{config.GROUP_REPOST_PATH}/{group_id}.json"
 
     def _check_potential_repost(self, update: Update, context: CallbackContext) -> NoReturn:
         bot = context.bot
@@ -156,7 +156,7 @@ class RepostBot:
         except FileNotFoundError:
             logger.info("group has no file; making one")
             with open(self._get_group_path(cid), 'w') as f:
-                json.dump({"track": strings.DEFAULT_CALLOUT, "reposts": {}}, f, indent=2)
+                json.dump({"track": config.DEFAULT_CALLOUT, "reposts": {}}, f, indent=2)
 
     def _get_repost_keys(self, bot: Bot, message: Message) -> Optional[List[str]]:
         keys = list()
@@ -226,8 +226,8 @@ class RepostBot:
         return reposts[key]
 
     def _check_directory(self) -> NoReturn:
-        if not os.path.exists(strings.GROUP_REPOST_PATH):
-            os.makedirs(strings.GROUP_REPOST_PATH)
+        if not os.path.exists(config.GROUP_REPOST_PATH):
+            os.makedirs(config.GROUP_REPOST_PATH)
 
 
 if __name__ == "__main__":

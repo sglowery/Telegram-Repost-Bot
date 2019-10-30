@@ -13,5 +13,3 @@ GROUP_REPOST_RESET_INITIAL_PROMPT = "Are you sure you want to delete the group's
 GROUP_REPOST_RESET_ADMIN_ONLY = "Only admins can do this action."
 GROUP_REPOST_RESET_NO = "I won't delete it then."
 GROUP_REPOST_DATA_RESET = "The group repost data has been reset."
-GROUP_REPOST_PATH = "groups/"
-DEFAULT_CALLOUT = {"url": True, "picture": True}

@@ -1,2 +1,4 @@
 BOT_ADMIN_ID = YOUR_ID_HERE
 REPOST_BOT_TOKEN = "YOUR_TOKEN_HERE"
+GROUP_REPOST_PATH = "groups/"
+DEFAULT_CALLOUT = {"url": True, "picture": True}
