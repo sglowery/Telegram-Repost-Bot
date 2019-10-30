@@ -9,5 +9,5 @@ setup(
     author='Stephen Lowery',
     author_email='stephen.g.lowery@gmail.com',
     description='A Telegram bot to track images sent in a group chat and call out reposts.',
-    install_requires=['imagehash', 'python-telegram-bot', 'telegram', 'PIL']
+    install_requires=['imagehash', 'python-telegram-bot', 'telegram', 'Pillow']
 )
