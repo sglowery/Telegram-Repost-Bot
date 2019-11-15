@@ -1,17 +1,29 @@
-import json
+import argparse
 import logging
-import os
-from typing import Optional, List, NoReturn
+import random
+from typing import Dict
+from typing import List
+from typing import NoReturn
 
-from PIL import Image
-from imagehash import average_hash
-from telegram import Bot, Update, ChatAction, MessageEntity, Message, User, Chat, KeyboardButton, ReplyKeyboardMarkup, \
-    ReplyKeyboardRemove
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext, ConversationHandler
+import yaml
+from telegram import Chat
+from telegram import ChatAction
+from telegram import KeyboardButton
+from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardRemove
+from telegram import Update
+from telegram import User
+from telegram.ext import CallbackContext
+from telegram.ext import CommandHandler
+from telegram.ext import ConversationHandler
+from telegram.ext import Filters
+from telegram.ext import MessageHandler
+from telegram.ext import Updater
 
-import config
-import strings
-from config import REPOST_BOT_TOKEN
+from repostbottypes import ConversationState
+from repostbottypes import RepostSet
+from repostitory import Repostitory
+from whiteliststatus import WhitelistAddStatus
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -21,215 +33,155 @@ logger = logging.getLogger(__name__)
 class RepostBot:
     RESET_CONFIRMATION_STATE = 0
 
-    def __init__(self):
-        self._check_directory()
-        self.reset_conversation_states = {
+    def __init__(self, token: str, strings: Dict[str, str], admin_id: int, repostitory: Repostitory):
+        self.token = token
+        self.admin_id = admin_id
+        self.strings = strings
+        self.repostitory = repostitory
+
+        reset_conversation_states = {
             RepostBot.RESET_CONFIRMATION_STATE: [MessageHandler(Filters.text, self._handle_reset_confirmation)]
         }
-        self.updater = Updater(REPOST_BOT_TOKEN, use_context=True)
+
+        self.updater = Updater(self.token, use_context=True)
         self.dp = self.updater.dispatcher
         self.dp.add_handler(MessageHandler(Filters.photo | Filters.entity("url"), self._check_potential_repost))
         self.dp.add_handler(CommandHandler("toggle", self._toggle_tracking))
-        self.dp.add_handler(ConversationHandler([CommandHandler("reset", self._reset_command)], self.reset_conversation_states, fallbacks=[]))
+        self.dp.add_handler(ConversationHandler([CommandHandler("reset", self._reset_prompt_from_command)],
+                                                reset_conversation_states, fallbacks=[]))
         self.dp.add_handler(CommandHandler("help", self._repost_bot_help))
         self.dp.add_handler(CommandHandler("settings", self._display_toggle_settings))
         self.dp.add_handler(CommandHandler("whitelist", self._whitelist_command))
 
-    def run(self):
+    def run(self) -> NoReturn:
         self.updater.start_polling()
         logger.info("bot is running")
         self.updater.idle()
 
-    def _reset_command(self, update: Update, context: CallbackContext):
+    def _reset_prompt_from_command(self, update: Update, context: CallbackContext) -> ConversationState:
         user: User = update.message.from_user
         chat: Chat = update.message.chat
-        if user.id == config.BOT_ADMIN_ID or user.id in [chat_member.user.id for chat_member in chat.get_administrators()]:
+        if user.id == self.admin_id or user.id in [chat_member.user.id for chat_member in chat.get_administrators()]:
             keyboard_buttons = [[KeyboardButton("Yes"), KeyboardButton("No")]]
             keyboard_markup = ReplyKeyboardMarkup(keyboard_buttons, one_time_keyboard=True, selective=True)
-            update.message.reply_text(strings.GROUP_REPOST_RESET_INITIAL_PROMPT,
-                                      reply_to_message_id=update.message.message_id,
+            update.message.reply_text(self.strings["group_repost_reset_initial_prompt"],
                                       reply_markup=keyboard_markup)
             return RepostBot.RESET_CONFIRMATION_STATE
         else:
-            update.message.reply_text(strings.GROUP_REPOST_RESET_ADMIN_ONLY, quote=True)
+            update.message.reply_text(self.strings["group_repost_reset_admin_only"])
             return ConversationHandler.END
 
-    def _handle_reset_confirmation(self, update: Update, context: CallbackContext):
-        response = self._strip_punctuation(str(update.message.text).lower())
-        bot_response = strings.GROUP_REPOST_RESET_NO
-        if response in ('y', 'yes', 'yeah', 'yep', 'aye', 'yis', 'yas', 'uh huh', 'sure'):
-            self._reset_group_repost_data(update.message.chat.id)
-            bot_response = strings.GROUP_REPOST_DATA_RESET
-        update.message.reply_text(bot_response, reply_markup=ReplyKeyboardRemove(selective=True), reply_to_message_id=update.message.message_id)
+    def _handle_reset_confirmation(self, update: Update, context: CallbackContext) -> ConversationState:
+        response = self._strip_nonalpha_chars(str(update.message.text).lower())
+        bot_response = self.strings["group_repost_reset_cancel"]
+        if response in ('y', 'yes', 'yeah', 'yep', 'aye', 'yis', 'yas', 'uh huh', 'sure', 'indeed'):
+            self.repostitory.reset_group_repost_data(update.message.chat.id)
+            bot_response = self.strings["group_repost_data_reset"]
+        update.message.reply_text(bot_response, reply_markup=ReplyKeyboardRemove(selective=True))
         return ConversationHandler.END
 
-    def _strip_punctuation(self, txt: str) -> str:
+    def _strip_nonalpha_chars(self, txt: str) -> str:
         return ''.join(filter(lambda l: l.lower() in 'abcdefghijklmnopqrstuvwxyz', txt))
 
-    def _reset_group_repost_data(self, cid: str):
-        group_data = self._get_group_data(cid)
+    def _reset_group_repost_data(self, cid: str) -> NoReturn:
+        group_data = self.repostitory.get_group_data(cid)
         new_group_data = {"track": group_data["track"],
                           "reposts": {}
                           }
-        with open(self._get_group_path(cid), 'w') as f:
-            json.dump(new_group_data, f, indent=2)
+        self.repostitory.save_group_data(cid, new_group_data)
 
     def _repost_bot_help(self, update: Update, context: CallbackContext) -> NoReturn:
-        bot_name = context.bot.get_me().first_name
-        context.bot.send_message(update.message.chat.id, strings.HELP_STRING.format(name=bot_name))
+        bot = context.bot
+        bot_name = bot.get_me().first_name
+        bot.send_message(update.message.chat.id, self.strings["help_command"].format(name=bot_name))
 
     def _whitelist_command(self, update: Update, context: CallbackContext) -> NoReturn:
         cid = update.message.chat.id
         reply_message = update.message.reply_to_message
         if reply_message is None:
-            context.bot.send_message(cid, strings.INVALID_WHITELIST_REPLY, reply_to_message_id=update.message.message_id)
-            return
+            update.message.reply_text(self.strings["invalid_whitelist_reply"])
         else:
+            keys_were_whitelisted = self.repostitory.whitelist_repostable_in_message(update.message.reply_to_message)
             reply_id = reply_message.message_id
-        with open(self._get_group_path(cid)) as f:
-            group_data = json.load(f)
-        self._toggle_whitelist_data(context.bot, update.message.message_id, cid, reply_id, reply_message, group_data)
-
-    def _toggle_whitelist_data(self, bot, message_id, cid, reply_id, reply_message, group_data):
-        whitelist_data = group_data.get("whitelist", list())
-        keys = self._get_repost_keys(bot, reply_message)
-        if keys is not None:
-            for key in keys:
-                whitelist_data.append(key)
-            group_data["whitelist"] = whitelist_data
-            with open(self._get_group_path(cid), 'w') as f:
-                json.dump(group_data, f, indent=2)
-            bot.send_message(cid, strings.SUCCESSFUL_WHITELIST_REPLY, reply_to_message_id=reply_id)
-        else:
-            bot.send_message(cid, strings.INVALID_WHITELIST_REPLY, reply_to_message_id=message_id)
+            if keys_were_whitelisted == WhitelistAddStatus.ALREADY_EXISTS:
+                context.bot.send_message(cid, self.strings["already_whitelisted_reply"])
+            elif keys_were_whitelisted == WhitelistAddStatus.FAIL:
+                update.message.reply_text(self.strings["invalid_whitelist_reply"])
+            else:
+                update.message.reply_text(self.strings["successful_whitelist_reply"], reply_to_message_id=reply_id)
 
     def _toggle_tracking(self, update: Update, context: CallbackContext) -> NoReturn:
         group_type = update.message.chat.type
-        if group_type in ("private"):
-            update.message.reply_text(strings.PRIVATE_CHAT_TOGGLE_STRING)
+        if group_type == "private":
+            update.message.reply_text(self.strings["private_chat_toggle"])
         else:
             cid = update.message.chat.id
             out = list()
-            group_data = self._get_group_data(cid)
-            toggle_data = group_data.get("track", config.DEFAULT_CALLOUT)
+            toggle_data = self.repostitory.get_tracking_data(cid)
             for arg in ("url", "picture"):
                 if arg in context.args:
                     toggle_data[arg] = not toggle_data[arg]
                     out.append(f"Tracking {arg}s: {toggle_data[arg]}")
-            group_data["track"] = toggle_data
-            with open(self._get_group_path(cid), 'w') as f:
-                json.dump(group_data, f, indent=2)
+            self.repostitory.save_tracking_data(cid, toggle_data)
             update.message.reply_text("\n".join(out))
-
-    def _get_group_data(self, cid) -> dict:
-        self._ensure_group_file(cid)
-        with open(self._get_group_path(cid)) as f:
-            data: dict = json.load(f)
-        return data
 
     def _display_toggle_settings(self, update: Update, context: CallbackContext) -> NoReturn:
         cid = update.message.chat.id
-        self._ensure_group_file(cid)
-        with open(self._get_group_path(cid)) as f:
-            group_toggles = json.load(f).get("track")
+        group_toggles = self.repostitory.get_group_data(cid).get("track")
         out = "\n".join(f"Tracking {k}s: {v}" for k, v in group_toggles.items())
         context.bot.send_message(cid, out)
 
-    # <group_id>.txt maps an image hash or url to a list of message ids that contain an image with that hash or url
-    def _get_group_path(self, group_id):
-        return f"{config.GROUP_REPOST_PATH}/{group_id}.json"
-
     def _check_potential_repost(self, update: Update, context: CallbackContext) -> NoReturn:
+        message = update.message
+        chat_type = message.chat.type
+        if chat_type in ("group", "channel", "supergroup"):
+            chat_type = message.chat.type
+            messages_with_same_hash = self.repostitory.get_repost_message_ids(message)
+            if chat_type in ("private", "group") and message.forward_from is None \
+                    and messages_with_same_hash is not None and len(messages_with_same_hash) > 0:
+                self._call_out_reposts(update, context, messages_with_same_hash)
+        else:
+            update.message.reply_text(self.strings["private_chat"])
+
+    def _call_out_reposts(self, update: Update, context: CallbackContext, list_of_reposts: List[RepostSet]):
         bot = context.bot
-        cid, chat_type, mid = update.message.chat.id, update.message.chat.type, update.message.message_id
-        self._ensure_group_file(cid)
-        potential_repost_keys = self._get_repost_keys(bot, update.message)
-        if chat_type in ("private", "group") and update.message.forward_from is None and potential_repost_keys is not None:
-            for key in potential_repost_keys:
-                if self._is_repost(cid, key, mid):
-                    self._reeeeeeeepost(bot, update, key, mid, cid)
-
-    def _ensure_group_file(self, cid: int) -> NoReturn:
-        try:
-            with open(self._get_group_path(cid)):
-                pass
-        except FileNotFoundError:
-            logger.info("group has no file; making one")
-            with open(self._get_group_path(cid), 'w') as f:
-                json.dump({"track": config.DEFAULT_CALLOUT, "reposts": {}}, f, indent=2)
-
-    def _get_repost_keys(self, bot: Bot, message: Message) -> Optional[List[str]]:
-        keys = list()
-        entities = message.parse_entities(types=[MessageEntity.URL])
-        with open(self._get_group_path(message.chat.id)) as f:
-            group_toggles = json.load(f).get("track")
-        if message.photo and group_toggles["picture"]:
-            photo = message.photo[-1]
-            path = f"{photo.file_id}.jpg"
-            logger.info("getting file...")
-            bot.get_file(photo).download(path)
-            logger.info("done")
-            keys.append(str(average_hash(Image.open(path), hash_size=24)))
-            os.remove(path)
-            return keys
-        elif len(entities) and group_toggles["url"]:
-            for entity in entities:
-                keys.append(str(hash(message.text[entity.offset: entity.offset + entity.length])))
-            return keys
-        else:
-            return None
-
-    def _is_repost(self, group_id: int, key: str, message_id: int) -> bool:
-        result = False
-        group_path = self._get_group_path(group_id)
-        with open(group_path, 'r') as f:
-            group_reposts = json.load(f)
-        if group_reposts["reposts"].get(key, None) is None:
-            logger.info("new picture or url detected")
-            group_reposts["reposts"].update({key: [message_id]})
-        else:
-            whitelist_data = group_reposts.get("whitelist", list())
-            if key not in whitelist_data:
-                logger.info("REPOST DETECTED REEEE")
-                group_reposts["reposts"].get(key).append(message_id)
-                result = True
-            else:
-                logger.info("Key is whitelisted; doing nothing")
-            group_reposts["whitelist"] = whitelist_data
-        with open(group_path, 'w') as f:
-            json.dump(group_reposts, f, indent=2)
-        return result
-
-    def _reeeeeeeepost(self, bot, update, key, mid, cid):
-        name = update.message.from_user.first_name
+        cid = update.message.chat.id
         bot.send_chat_action(cid, ChatAction.TYPING)
-        bot.send_message(cid, strings.REPOST_ALERT_STRING, reply_to_message_id=mid)
-        for i, repost_msg in enumerate(self._get_all_but_last_reposts(cid, key)):
+        for repost_set in list_of_reposts:
+            update.message.reply_text(self.strings["repost_alert"])
+            for i, repost_msg in enumerate(repost_set[:-1]):
+                bot.send_chat_action(cid, ChatAction.TYPING)
+                if i == 0:
+                    msg = self.strings["first_repost_callout"]
+                else:
+                    msg = random.choice(self.strings["intermediary_callouts"])
+                bot.send_message(cid, msg, reply_to_message_id=repost_msg)
             bot.send_chat_action(cid, ChatAction.TYPING)
-            if i == 0:
-                msg = strings.REPOST_NOTIFIERS[0]
-            else:
-                msg = strings.REPOST_NOTIFIERS[1]
-            bot.send_message(cid, msg, reply_to_message_id=repost_msg)
-        bot.send_chat_action(cid, ChatAction.TYPING)
-        bot.send_message(cid, strings.REPOST_NOTIFIERS[2].format(name=name.upper()))
-
-    def _get_group_repost_data(self):
-        pass
-
-    def _get_all_but_last_reposts(self, group_id: int, key: str) -> List[str]:
-        return self._get_repost_messages(group_id, key)[:-1]
-
-    def _get_repost_messages(self, group_id: int, key: str) -> List[str]:
-        with open(self._get_group_path(group_id), 'r') as f:
-            reposts = json.load(f).get("reposts")
-        return reposts[key]
-
-    def _check_directory(self) -> NoReturn:
-        if not os.path.exists(config.GROUP_REPOST_PATH):
-            os.makedirs(config.GROUP_REPOST_PATH)
+            name = update.message.from_user.first_name
+            bot.send_message(cid, self.strings["final_repost_callout"].format(name=name.upper()))
 
 
 if __name__ == "__main__":
-    rpb = RepostBot()
-    rpb.run()
+    parser = argparse.ArgumentParser(description="Run an instance of Repost Bot over Telegram")
+    # required = parser.add_argument_group('config file argument (required)')
+    parser.add_argument('-c', '--config', type=str, help='set path of config file relative to this file', required=True)
+    args = parser.parse_args()
+    config = args.config
+    try:
+        with open(config, 'r') as f:
+            config_data = yaml.safe_load(f)
+        repost_data_path: str = config_data["repost_data_path"]
+        bot_admin_id: int = config_data["bot_admin_id"]
+        telegram_token: str = config_data["bot_token"]
+        default_callouts: Dict[str, bool] = config_data["default_callouts"]
+        bot_strings: Dict[str, str] = config_data["strings"]
+        hash_size: int = config_data["hash_size"]
+    except KeyError as e:
+        num_keys = len(e.args)
+        print(f"Malformed config file -- could not find key{'s' if num_keys > 1 or num_keys == 0 else ''}: {e}")
+    except (FileNotFoundError, TypeError) as e:
+        print(f"{e.strerror} -- could not find '{config}'")
+    else:
+        repost_repository = Repostitory(hash_size, repost_data_path, default_callouts)
+        rpb = RepostBot(telegram_token, bot_strings, bot_admin_id, repost_repository)
+        rpb.run()

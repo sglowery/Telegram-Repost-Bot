@@ -4,4 +4,4 @@ __pycache__/
 .idea/
 tests/
 
-config.py
+config.yaml
