@@ -149,12 +149,17 @@ class RepostBot:
         bot.send_chat_action(cid, ChatAction.TYPING)
         for repost_set in list_of_reposts:
             update.message.reply_text(self.strings["repost_alert"])
+            prev_msg = ""
+            msg = ""
             for i, repost_msg in enumerate(repost_set[:-1]):
                 bot.send_chat_action(cid, ChatAction.TYPING)
                 if i == 0:
                     msg = self.strings["first_repost_callout"]
                 else:
-                    msg = random.choice(self.strings["intermediary_callouts"])
+                    msg = random.choice(list(filter(lambda response: response != prev_msg,
+                                                    self.strings["intermediary_callouts"])))
+
+                prev_msg = msg
                 bot.send_message(cid, msg, reply_to_message_id=repost_msg)
             bot.send_chat_action(cid, ChatAction.TYPING)
             name = update.message.from_user.first_name
