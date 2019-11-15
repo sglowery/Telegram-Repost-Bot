@@ -150,7 +150,6 @@ class RepostBot:
         for repost_set in list_of_reposts:
             update.message.reply_text(self.strings["repost_alert"])
             prev_msg = ""
-            msg = ""
             for i, repost_msg in enumerate(repost_set[:-1]):
                 bot.send_chat_action(cid, ChatAction.TYPING)
                 if i == 0:
