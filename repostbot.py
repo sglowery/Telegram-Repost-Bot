@@ -104,7 +104,7 @@ class RepostBot:
             keys_were_whitelisted = self.repostitory.whitelist_repostable_in_message(update.message.reply_to_message)
             reply_id = reply_message.message_id
             if keys_were_whitelisted == WhitelistAddStatus.ALREADY_EXISTS:
-                context.bot.send_message(cid, self.strings["already_whitelisted_reply"])
+                context.bot.send_message(cid, self.strings["removed_from_whitelist"])
             elif keys_were_whitelisted == WhitelistAddStatus.FAIL:
                 update.message.reply_text(self.strings["invalid_whitelist_reply"])
             else:
@@ -133,12 +133,9 @@ class RepostBot:
 
     def _check_potential_repost(self, update: Update, context: CallbackContext) -> NoReturn:
         message = update.message
-        chat_type = message.chat.type
-        if chat_type in ("group", "channel", "supergroup"):
-            chat_type = message.chat.type
+        if message.chat.type in ("group", "channel", "supergroup"):
             messages_with_same_hash = self.repostitory.get_repost_message_ids(message)
-            if chat_type in ("private", "group") and message.forward_from is None \
-                    and messages_with_same_hash is not None and len(messages_with_same_hash) > 0:
+            if message.forward_from is None and messages_with_same_hash is not None and len(messages_with_same_hash) > 0:
                 self._call_out_reposts(update, context, messages_with_same_hash)
         else:
             update.message.reply_text(self.strings["private_chat"])
@@ -165,6 +162,44 @@ class RepostBot:
             bot.send_message(cid, self.strings["final_repost_callout"].format(name=name.upper()))
 
 
+def ensure_proper_config_structure(data: dict) -> bool:
+    top_level = ["repost_data_path", "bot_admin_id", "bot_token", "hash_size", "default_callouts", "strings"]
+    defaults = ["url", "picture"]
+    strings = ["private_chat", "private_chat_toggle", "help_command", "repost_alert", "first_repost_callout",
+               "final_repost_callout", "invalid_whitelist_reply", "removed_from_whitelist",
+               "successful_whitelist_reply", "group_repost_reset_initial_prompt", "group_repost_reset_admin_only",
+               "group_repost_reset_cancel", "group_repost_data_reset"]
+    print("testing config file for all required fields")
+
+    print("testing top-level fields:")
+    for field in top_level:
+        print(f"\ttesting \"{field}\"...", end="")
+        if not data.get(field):
+            print("ERROR")
+            return False
+        else:
+            print("found")
+
+    print("\ntesting default callout settings:")
+    for default in defaults:
+        print(f"\ttesting \"{default}\"...", end="")
+        if not data.get("default_callouts").get(default):
+            print("ERROR")
+            return False
+        else:
+            print("found")
+
+    print("\ntesting bot strings:")
+    for string in strings:
+        print(f"\ttesting \"{string}\"...", end="")
+        if not data.get("strings").get(string):
+            print("ERROR")
+            return False
+        else:
+            print("found")
+    return True
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run an instance of Repost Bot over Telegram")
     # required = parser.add_argument_group('config file argument (required)')
@@ -174,6 +209,7 @@ if __name__ == "__main__":
     try:
         with open(config, 'r') as f:
             config_data = yaml.safe_load(f)
+        ensure_proper_config_structure(config_data)
         repost_data_path: str = config_data["repost_data_path"]
         bot_admin_id: int = config_data["bot_admin_id"]
         telegram_token: str = config_data["bot_token"]

@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import os
+import time
 from typing import List
 from typing import NoReturn
 
@@ -68,11 +69,17 @@ class Repostitory:
         whitelisted_hashes: WhitelistStructure = group_data.get("whitelist", list())
         keys_in_message = self._get_repost_keys(message)
         if len(keys_in_message) > 0:
-            if any([key in whitelisted_hashes for key in keys_in_message]):
-                return WhitelistAddStatus.ALREADY_EXISTS
-            whitelisted_hashes.extend(keys_in_message)
+            key_removed = False
+            for key in keys_in_message:
+                if key in whitelisted_hashes:
+                    whitelisted_hashes.remove(key)
+                    key_removed = True
+                else:
+                    whitelisted_hashes.append(key)
             group_data["whitelist"] = whitelisted_hashes
             self.save_group_data(message.chat.id, group_data)
+            if key_removed:
+                return WhitelistAddStatus.ALREADY_EXISTS
             return WhitelistAddStatus.SUCCESS
         return WhitelistAddStatus.FAIL
 
@@ -101,7 +108,7 @@ class Repostitory:
         except FileNotFoundError:
             logger.info("group has no file; making one")
             with open(self._get_group_path(cid), 'w') as f:
-                json.dump({"track": self.default_callout_settings, "reposts": {}}, f, indent=2)
+                json.dump({"track": self.default_callout_settings, "reposts": {}, "whitelist": []}, f, indent=2)
 
     def _get_repost_keys(self, message: Message) -> RepostHashKeys:
         keys = list()
@@ -111,9 +118,10 @@ class Repostitory:
         if message.photo and group_toggles["picture"]:
             photo = message.photo[-1]
             path = f"{photo.file_id}.jpg"
+            old_time = time.process_time()
             logger.info("getting file...")
             message.bot.get_file(photo).download(path)
-            logger.info("done")
+            logger.info(f"done (took {time.process_time() - old_time} seconds)")
             keys.append(str(average_hash(Image.open(path), hash_size=self.hash_size)))
             os.remove(path)
         if len(entities) and group_toggles["url"]:

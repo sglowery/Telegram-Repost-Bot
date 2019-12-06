@@ -32,11 +32,10 @@ strings:
     ]
 
   invalid_whitelist_reply: "Reply to a message containing a picture or URL you want whitelisted."
-  already_whitelisted_reply: "That's already whitelisted!"
+  removed_from_whitelist: "I'll start tracking reposts of that again."
   successful_whitelist_reply: "I won't track reposts of that from now on."
 
   group_repost_reset_initial_prompt: "Are you sure you want to delete the group's repost data? This is irreversible."
   group_repost_reset_admin_only: "Only admins can do this action."
   group_repost_reset_cancel: "I won't delete it then."
   group_repost_data_reset: "The group repost data has been reset."
-...

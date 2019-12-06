@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='reeepostbot',
-    version='0.5',
+    version='0.6',
     url='',
     modules=['repostbot'],
     license='GNU General Public License v3.0',
