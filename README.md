@@ -19,5 +19,5 @@ Made with Python 3.7
 - `/help` - Bot will reply with information on what it does and what it stores
 - `/toggle [url | picture]` - Toggles tracking of the passed arguments (currently only tracks URLs and pictures)
 - `/settings` - Display what the bot is tracking for the current group
-- `/whitelist` - Use this command while replying to a message that contains an image or URL you want to whitelist
+- `/whitelist` - Reply to a picture or URL with this command to toggle the whitelist status of what you're replying to
 - `/reset` - Only group admins and the user whose ID is set as the bot's admin can call this. Will reset a group's repost and whitelist data and revert tracking to the default settings
