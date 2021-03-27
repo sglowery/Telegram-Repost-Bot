@@ -3,5 +3,6 @@ groups/
 __pycache__/
 .idea/
 tests/
+/venv/
 
 config.yaml

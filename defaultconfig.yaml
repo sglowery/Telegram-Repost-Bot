@@ -1,37 +1,33 @@
 ---
-repost_data_path: "groups/"       # the folder where all group repost data will be stored
-bot_admin_id: 123                 # your personal user id, used to override group admin settings to reset group repost data
+repost_data_path: "groups/"       # the folder where all group repost data will be stored.
+bot_admin_id: 123                 # your personal user id, used to override group admin settings to reset group repost data.
 bot_token: "your token here"      # get this from the bot father!
-hash_size: 24                     # lower numbers = smaller file sizes, but less precise hashes and more false positives
-                                  # try not to go below 20; higher than 24 may result in false negatives
-
+hash_size: 22                     # lower numbers = smaller file sizes, but less precise hashes and more false positives.
+                                  # try not to go below 20; higher than 24 may result in false negatives.
+repost_callout_timeout: 60        # time in seconds that must pass before repost bot will make another callout in a group.
+auto_call_out: true               # whether the bot should automatically call out reposts or wait for a specific query.
+callout_style: "singular"         # "verbose" or "singular". determines if bot calls out each repost individually or
+                                  # addresses it with a single response. warning: "verbose" can be very spammy, but it
+                                  # is pretty funny.
+                                  #
 default_callouts:                 # repost bot can be configured by default to track URLs and pictures
   url: true                       # users can use the /toggle command to change these at any time
   picture: true
 
-strings:
-  private_chat: "I don't care about reposts just between us. I only check in group chats. Add me to a group ya dingus"
+strings:  # these are the strings used for the bot's various responses, and also for its repost callout strategies.
+          # if you create a new strategy, the strings for its responses need to be in here and the keys to refer to it
+          # need to be returned in its get_required_strings() method
+  private_chat: "I don't care about reposts just between us. I only check in group chats. Add me to a group."
   private_chat_toggle: "I don't track reposts in private chats."
 
   help_command: "I'm {name}. I analyze the pictures and URLs you send and call out reposts.\n
    I store the message id, and hashed versions of the URLs and pictures you send. GIFs and videos are not tracked.\n\n
-   /toggle [url | picture] - Toggles whether I track URLs or pictures. You can toggle both at the same time with /toggle url picture.\n
+   /toggle [url | picture] - Toggles whether I track URLs or pictures. You can toggle both at the same time with /toggle url picture. Reposts of untracked types will still be logged, but not called out.\n
    /settings - Display the current tracking settings.\n
-   /whitelist - Reply to the message containing the URL or picture you want to whitelist.\n
+   /whitelist - Reply to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
    /reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets tracking to defaults. This can't be undone."
 
-  repost_alert: "My friend, you've posted unoriginal content!"
-  first_repost_callout: "Look, it was here first"
-  final_repost_callout: "Let's keep the reposting to a minimum mmkay?"
-
-  # one of these will be chosen at random for each message in a repost set
-  intermediary_callouts: [
-      "And here as well!",
-      "Here it is again!",
-      "Another one right here",
-    ]
-
-  invalid_whitelist_reply: "Reply to a message containing a picture or URL you want whitelisted."
+  invalid_whitelist_reply: "Use /whitelist while replying to a message so I can whitelist what's in it."
   removed_from_whitelist: "I'll start tracking reposts of that again."
   successful_whitelist_reply: "I won't track reposts of that from now on."
 
@@ -39,3 +35,22 @@ strings:
   group_repost_reset_admin_only: "Only admins can do this action."
   group_repost_reset_cancel: "I won't delete it then."
   group_repost_data_reset: "The group repost data has been reset."
+
+  repost_alert: "My friend, you've posted unoriginal content!"
+  first_repost_callout: "Look, it was here first."
+  final_repost_callout: "Let's keep the reposting to a minimum mmkay, {name}?"
+
+  # one of these will be chosen at random for each message in a repost set
+  intermediary_callouts: [
+      "And here as well!",
+      "Here it is again!",
+      "Another one right here",
+  ]
+
+  single_callout_one_repost_options: [
+      "Attention {name}: this is a repost. Everyone look and laugh at them."
+  ]
+
+  single_callout_x_num_reposts_options: [
+      "{name}, you know this has been posted {num} times before, right? Crazy."
+  ]
