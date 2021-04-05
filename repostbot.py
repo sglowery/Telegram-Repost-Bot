@@ -3,7 +3,7 @@ from typing import Dict, Type
 from typing import List
 from typing import NoReturn
 
-from telegram import ChatAction
+from telegram import ChatAction, Chat
 from telegram import KeyboardButton
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyKeyboardRemove
@@ -16,23 +16,25 @@ from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
 from conversation_state import ConversationState
+from utils import flood_protection, ignore_chat_type
 from repostitory import Repostitory
 from strategies import RepostCalloutStrategy
 from whitelist_status import WhitelistAddStatus
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("RepostBot")
 
 
 class RepostBot:
 
     def __init__(self, token: str, strings: Dict[str, str], admin_id: int, repostitory: Repostitory,
-                 repost_callout_strategy: Type[RepostCalloutStrategy], auto_call_out: bool):
+                 repost_callout_strategy: Type[RepostCalloutStrategy], auto_call_out: bool, flood_protection_seconds: int):
         self.token = token
         self.admin_id = admin_id
         self.strings = strings
         self.repostitory = repostitory
         self.repost_callout_strategy = repost_callout_strategy(self.strings)
         self.auto_call_out = auto_call_out
+        self.flood_protection_seconds = flood_protection_seconds
 
         reset_conversation_states = {
             ConversationState.RESET_CONFIRMATION_STATE: [MessageHandler(Filters.text, self._handle_reset_confirmation)]
@@ -57,12 +59,17 @@ class RepostBot:
         message = update.message
         if message.chat.type in ("group", "channel", "supergroup"):
             hash_to_message_id_map = self.repostitory.process_message_entities(message)
-            hashes_with_reposts = {entity_hash: message_ids for entity_hash, message_ids in hash_to_message_id_map.items() if len(message_ids) > 1}
-            if message.forward_from is None and len(hashes_with_reposts) > 0 and self.auto_call_out:
+            hashes_with_reposts = {
+                entity_hash: message_ids
+                for entity_hash, message_ids in hash_to_message_id_map.items()
+                if len(message_ids) > 1
+            }
+            if message.forward_from is None and any(len(reposts) > 0 for reposts in hashes_with_reposts.values()) and self.auto_call_out:
                 self._call_out_reposts(update, context, hashes_with_reposts)
         else:
             update.message.reply_text(self.strings["private_chat"])
 
+    @flood_protection("toggle")
     def _toggle_tracking(self, update: Update, context: CallbackContext) -> NoReturn:
         group_type = update.message.chat.type
         if group_type == "private":
@@ -78,6 +85,8 @@ class RepostBot:
             self.repostitory.save_tracking_data(group_id, toggle_data)
             update.message.reply_text("\n".join(responses))
 
+    @ignore_chat_type(Chat.PRIVATE)
+    @flood_protection("reset")
     def _reset_prompt_from_command(self, update: Update, context: CallbackContext) -> ConversationState:
         user = update.message.from_user
         chat = update.message.chat
@@ -100,24 +109,29 @@ class RepostBot:
         update.message.reply_text(bot_response, reply_markup=ReplyKeyboardRemove(selective=True))
         return ConversationHandler.END
 
+    @flood_protection("help")
     def _repost_bot_help(self, update: Update, context: CallbackContext) -> NoReturn:
         bot = context.bot
         bot_name = bot.get_me().first_name
         bot.send_message(update.message.chat.id, self.strings["help_command"].format(name=bot_name))
 
+    @ignore_chat_type(Chat.PRIVATE)
+    @flood_protection("toggle")
     def _display_toggle_settings(self, update: Update, context: CallbackContext) -> NoReturn:
         group_id = update.message.chat.id
         group_toggles = self.repostitory.get_group_data(group_id).get("track")
         response = "\n".join(f"Tracking {k}s: {v}" for k, v in group_toggles.items())
         context.bot.send_message(group_id, response)
 
+    @ignore_chat_type(Chat.PRIVATE)
+    @flood_protection("whitelist")
     def _whitelist_command(self, update: Update, context: CallbackContext) -> NoReturn:
         group_id = update.message.chat.id
         reply_message = update.message.reply_to_message
         if reply_message is None:
             update.message.reply_text(self.strings["invalid_whitelist_reply"])
         else:
-            whitelist_command_result = self.repostitory.whitelist_repostable_in_message(update.message.reply_to_message)
+            whitelist_command_result = self.repostitory.process_whitelist_command_on_message(update.message.reply_to_message)
             reply_id = reply_message.message_id
             if whitelist_command_result == WhitelistAddStatus.ALREADY_EXISTS:
                 context.bot.send_message(group_id, self.strings["removed_from_whitelist"])
@@ -126,10 +140,16 @@ class RepostBot:
             else:
                 update.message.reply_text(self.strings["successful_whitelist_reply"], reply_to_message_id=reply_id)
 
+    @flood_protection("userid")
+    def _user_id_command(self, update: Update, context: CallbackContext) -> NoReturn:
+        if update.message.chat.type == "private":
+            update.message.reply_text(str(update.message.from_user.id))
+
+    @flood_protection("call_out_reposts")
     def _call_out_reposts(self,
                           update: Update,
                           context: CallbackContext,
-                          hash_to_message_id_dict: Dict[str, List[int]]):
+                          hash_to_message_id_dict: Dict[str, List[int]]) -> NoReturn:
         bot = context.bot
         cid = update.message.chat.id
         bot.send_chat_action(cid, ChatAction.TYPING)

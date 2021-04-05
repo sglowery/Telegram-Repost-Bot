@@ -1,10 +1,15 @@
 ---
+# If you cloned this repo from GitHub, don't change this file! If you update with a git pull, it's likely there will be
+# changes that will need to be merged. If you're comfortable with this, that's fine, but ideally you should copy this
+# and put your own data in that one. If you're missing data in your user-created config, Repost Bot will fall back on
+# this file.
 repost_data_path: "groups/"       # the folder where all group repost data will be stored.
 bot_admin_id: 123                 # your personal user id, used to override group admin settings to reset group repost data.
-bot_token: "your token here"      # get this from the bot father!
+                                  # use the /userid command in a private chat with the bot to echo your telegram user id.
+bot_token: "your token here"      # get this from BotFather
 hash_size: 22                     # lower numbers = smaller file sizes, but less precise hashes and more false positives.
                                   # try not to go below 20; higher than 24 may result in false negatives.
-repost_callout_timeout: 60        # time in seconds that must pass before repost bot will make another callout in a group.
+repost_callout_timeout: 15        # time in seconds that must pass before repost bot will make another callout in a group.
 auto_call_out: true               # whether the bot should automatically call out reposts or wait for a specific query.
 callout_style: "singular"         # "verbose" or "singular". determines if bot calls out each repost individually or
                                   # addresses it with a single response. warning: "verbose" can be very spammy, but it
@@ -14,9 +19,10 @@ default_callouts:                 # repost bot can be configured by default to t
   url: true                       # users can use the /toggle command to change these at any time
   picture: true
 
-strings:  # these are the strings used for the bot's various responses, and also for its repost callout strategies.
-          # if you create a new strategy, the strings for its responses need to be in here and the keys to refer to it
-          # need to be returned in its get_required_strings() method
+# these are the strings used for the bot's various responses, and also for its repost callout strategies.
+# if you create a new strategy, the strings for its responses need to be in here and the keys to refer to it
+# need to be returned in its get_required_strings() method
+strings:
   private_chat: "I don't care about reposts just between us. I only check in group chats. Add me to a group."
   private_chat_toggle: "I don't track reposts in private chats."
 
@@ -36,17 +42,19 @@ strings:  # these are the strings used for the bot's various responses, and also
   group_repost_reset_cancel: "I won't delete it then."
   group_repost_data_reset: "The group repost data has been reset."
 
+  # these three strings are for the verbose callout response style
   repost_alert: "My friend, you've posted unoriginal content!"
   first_repost_callout: "Look, it was here first."
   final_repost_callout: "Let's keep the reposting to a minimum mmkay, {name}?"
 
-  # one of these will be chosen at random for each message in a repost set
+  # one of these will be chosen at random for each message in a repost set, also part of the verbose style
   intermediary_callouts: [
       "And here as well!",
       "Here it is again!",
       "Another one right here",
   ]
 
+  # these next two string sets are for the single message callout style (singular)
   single_callout_one_repost_options: [
       "Attention {name}: this is a repost. Everyone look and laugh at them."
   ]

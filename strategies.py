@@ -6,7 +6,7 @@ from typing import List, NoReturn, Dict, Type
 from telegram import Update, ChatAction
 from telegram.ext import CallbackContext
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Strategies")
 
 
 def _format_response_with_name(response: str, name: str, **kwargs) -> str:
@@ -19,7 +19,7 @@ class RepostCalloutStrategy(ABC):
 
     @abstractmethod
     def callout(self, update: Update, context: CallbackContext, hash_to_message_id_dict: Dict[str, List[int]]) -> NoReturn:
-        pass
+        logger.info("Calling out repost")
 
     @staticmethod
     @abstractmethod
@@ -70,6 +70,7 @@ class _CallOutNumberOfRepostsStrategy(RepostCalloutStrategy):
         return ["single_callout_one_repost_options", "single_callout_x_num_reposts_options"]
 
     def callout(self, update: Update, context: CallbackContext, hash_to_message_id_dict: Dict[str, List[int]]):
+        super().callout(update, context, hash_to_message_id_dict)
         context.bot.send_chat_action(update.effective_chat.id, ChatAction.TYPING)
         num_reposts = sum(len(message_ids) - 1 for message_ids in hash_to_message_id_dict.values())
         name = update.message.from_user.first_name

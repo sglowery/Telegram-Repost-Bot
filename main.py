@@ -120,5 +120,5 @@ if __name__ == "__main__":
         raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed")
 
     repost_repository = Repostitory(hash_size, repost_data_path, default_callouts)
-    rpb = RepostBot(telegram_token, bot_strings, bot_admin_id, repost_repository, STRATEGIES.get(strategy), auto_call_out)
+    rpb = RepostBot(telegram_token, bot_strings, bot_admin_id, repost_repository, STRATEGIES.get(strategy), auto_call_out, repost_callout_timeout)
     rpb.run()

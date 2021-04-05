@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import time
-from typing import List, Dict
+from typing import List, Dict, Optional
 from typing import NoReturn
 
 from PIL import Image
@@ -11,16 +11,18 @@ from imagehash import average_hash
 from telegram import Message
 from telegram import MessageEntity
 
-from get_message_entity_hashes_result import GetMessageEntityHashesResult
 from whitelist_status import WhitelistAddStatus
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger("Repostitory")
 
-logger = logging.getLogger(__name__)
+
+class GetMessageEntityHashesResult:
+    def __init__(self, picture_key: Optional[str], url_keys: List[str]):
+        self.picture_key = picture_key
+        self.url_keys = url_keys
 
 
 class Repostitory:
-
     def __init__(self, hash_size: int, data_path: str, default_callout_settings: Dict[str, bool]):
         self.data_path = data_path
         self.default_callout_settings = default_callout_settings
@@ -49,11 +51,6 @@ class Repostitory:
         whitelist = group_data.get("whitelist", [])
         return {entity_hash: reposts.get(entity_hash, []) for entity_hash in hashes if entity_hash not in whitelist}
 
-    def get_repost_message_ids_for_group(self, group_id: int, hash_key: str) -> List[int]:
-        group_data = self.get_group_data(group_id)
-        group_reposts = group_data.get("reposts")
-        return group_reposts.get(hash_key, [])
-
     def save_group_data(self, chat_id: int, new_group_data) -> NoReturn:
         with open(self._get_path_for_group_data(chat_id), 'w') as f:
             json.dump(new_group_data, f, indent=2)
@@ -64,7 +61,7 @@ class Repostitory:
             data = json.load(f)
         return data
 
-    def whitelist_repostable_in_message(self, message: Message) -> WhitelistAddStatus:
+    def process_whitelist_command_on_message(self, message: Message) -> WhitelistAddStatus:
         group_data = self.get_group_data(message.chat.id)
         whitelisted_hashes: List[str] = group_data.get("whitelist", list())
         hashes = self._get_message_entity_hashes(message)
