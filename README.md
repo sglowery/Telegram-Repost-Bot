@@ -1,8 +1,7 @@
 # Telegram Repost Bot
 Are you in a Telegram group with a bunch of people posting memes?\
 Do they sometimes send something that's been posted before?\
-If this gets your blood boiling, Repost Bot is what you need. Repost Bot keeps track of messages with pictures or URLs in them by creating a hash\
-of them, similar to how reverse image search works.
+If this gets your blood boiling, Repost Bot is what you need. Repost Bot keeps track of messages with pictures or URLs in them by creating a hash of them, similar to how reverse image search works.
 
 # Dependencies
 Requires the `imagehash` and `python-telegram-bot` libraries. The latter should come with the `telegram` library.
