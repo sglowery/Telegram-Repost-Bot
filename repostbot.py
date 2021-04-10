@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, Type
 from typing import List
-from typing import NoReturn
 
 from telegram import ChatAction, Chat
 from telegram import KeyboardButton
@@ -50,12 +49,12 @@ class RepostBot:
         self.dp.add_handler(CommandHandler("settings", self._display_toggle_settings))
         self.dp.add_handler(CommandHandler("whitelist", self._whitelist_command))
 
-    def run(self) -> NoReturn:
+    def run(self) -> None:
         self.updater.start_polling()
         logger.info("bot is running")
         self.updater.idle()
 
-    def _check_potential_repost(self, update: Update, context: CallbackContext) -> NoReturn:
+    def _check_potential_repost(self, update: Update, context: CallbackContext) -> None:
         message = update.message
         if message.chat.type in ("group", "channel", "supergroup"):
             hash_to_message_id_map = self.repostitory.process_message_entities(message)
@@ -70,7 +69,7 @@ class RepostBot:
             update.message.reply_text(self.strings["private_chat"])
 
     @flood_protection("toggle")
-    def _toggle_tracking(self, update: Update, context: CallbackContext) -> NoReturn:
+    def _toggle_tracking(self, update: Update, context: CallbackContext) -> None:
         group_type = update.message.chat.type
         if group_type == "private":
             update.message.reply_text(self.strings["private_chat_toggle"])
@@ -110,14 +109,14 @@ class RepostBot:
         return ConversationHandler.END
 
     @flood_protection("help")
-    def _repost_bot_help(self, update: Update, context: CallbackContext) -> NoReturn:
+    def _repost_bot_help(self, update: Update, context: CallbackContext) -> None:
         bot = context.bot
         bot_name = bot.get_me().first_name
         bot.send_message(update.message.chat.id, self.strings["help_command"].format(name=bot_name))
 
     @ignore_chat_type(Chat.PRIVATE)
     @flood_protection("toggle")
-    def _display_toggle_settings(self, update: Update, context: CallbackContext) -> NoReturn:
+    def _display_toggle_settings(self, update: Update, context: CallbackContext) -> None:
         group_id = update.message.chat.id
         group_toggles = self.repostitory.get_group_data(group_id).get("track")
         response = "\n".join(f"Tracking {k}s: {v}" for k, v in group_toggles.items())
@@ -125,7 +124,7 @@ class RepostBot:
 
     @ignore_chat_type(Chat.PRIVATE)
     @flood_protection("whitelist")
-    def _whitelist_command(self, update: Update, context: CallbackContext) -> NoReturn:
+    def _whitelist_command(self, update: Update, context: CallbackContext) -> None:
         group_id = update.message.chat.id
         reply_message = update.message.reply_to_message
         if reply_message is None:
@@ -141,7 +140,7 @@ class RepostBot:
                 update.message.reply_text(self.strings["successful_whitelist_reply"], reply_to_message_id=reply_id)
 
     @flood_protection("userid")
-    def _user_id_command(self, update: Update, context: CallbackContext) -> NoReturn:
+    def _user_id_command(self, update: Update, context: CallbackContext) -> None:
         if update.message.chat.type == "private":
             update.message.reply_text(str(update.message.from_user.id))
 
@@ -149,7 +148,7 @@ class RepostBot:
     def _call_out_reposts(self,
                           update: Update,
                           context: CallbackContext,
-                          hash_to_message_id_dict: Dict[str, List[int]]) -> NoReturn:
+                          hash_to_message_id_dict: Dict[str, List[int]]) -> None:
         bot = context.bot
         cid = update.message.chat.id
         bot.send_chat_action(cid, ChatAction.TYPING)

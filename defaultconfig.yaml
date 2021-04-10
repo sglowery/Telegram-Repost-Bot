@@ -30,8 +30,9 @@ strings:
    I store the message id, and hashed versions of the URLs and pictures you send. GIFs and videos are not tracked.\n\n
    /toggle [url | picture] - Toggles whether I track URLs or pictures. You can toggle both at the same time with /toggle url picture. Reposts of untracked types will still be logged, but not called out.\n
    /settings - Display the current tracking settings.\n
-   /whitelist - Reply to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
-   /reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets tracking to defaults. This can't be undone."
+   /whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
+   /reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets tracking to defaults. This can't be undone.\n\n
+   Flood protection is on a per-user-per-command basis, including calling out reposts. I will still track posts when being flooded, but will not call them out."
 
   invalid_whitelist_reply: "Use /whitelist while replying to a message so I can whitelist what's in it."
   removed_from_whitelist: "I'll start tracking reposts of that again."
