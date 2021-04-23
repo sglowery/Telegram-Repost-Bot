@@ -111,7 +111,7 @@ if __name__ == "__main__":
         hash_size = config_data.get("hash_size", default_hash_size)
         repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
         auto_call_out = config_data.get("auto_call_out", default_auto_call_out)
-        strategy = default_config_data.get("callout_style", default_strategy)
+        strategy = config_data.get("callout_style", default_strategy)
 
     bot_variables = (repost_data_path, bot_admin_id, telegram_token, default_callouts, bot_strings, hash_size,
                      repost_callout_timeout, auto_call_out, strategy, auto_call_out)
