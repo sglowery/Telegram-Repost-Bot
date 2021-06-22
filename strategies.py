@@ -46,13 +46,11 @@ class _CallOutAllIndividualRepostsStrategy(RepostCalloutStrategy):
             prev_msg = ""
             for i, repost_msg in enumerate(message_ids[:-1]):
                 bot.send_chat_action(cid, ChatAction.TYPING)
+                msg = self._get_random_intermediary_message(prev_msg)
                 if i == 0:
                     msg = self.strings["first_repost_callout"]
-                else:
-                    msg = self._get_random_intermediary_message(prev_msg)
-                msg = _format_response_with_name(msg, name)
                 prev_msg = msg
-                bot.send_message(cid, msg, reply_to_message_id=repost_msg)
+                bot.send_message(cid, _format_response_with_name(msg, name), reply_to_message_id=repost_msg)
             bot.send_chat_action(cid, ChatAction.TYPING)
             bot.send_message(cid, _format_response_with_name(self.strings["final_repost_callout"], name))
 
@@ -76,7 +74,7 @@ class _CallOutNumberOfRepostsStrategy(RepostCalloutStrategy):
         name = update.message.from_user.first_name
         key = "single_callout_one_repost_options" if num_reposts == 1 else "single_callout_x_num_reposts_options"
         response_with_num_and_name = _format_response_with_name(random.choice(self.strings[key]), name, num=num_reposts)
-        update.message.reply_text(response_with_num_and_name, reply_to_message_id=update.message.message_id)
+        update.message.reply_text(response_with_num_and_name, quote=True)
 
 
 STRATEGIES: Dict[str, Type[RepostCalloutStrategy]] = {

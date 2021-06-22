@@ -1,4 +1,5 @@
 import argparse
+import locale
 import logging
 from typing import List
 
@@ -11,6 +12,8 @@ from strategies import STRATEGIES, DEFAULT_STRATEGY
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+locale.setlocale(locale.LC_ALL, 'en_US')
 
 
 class NoConfigFileAvailableException(Exception):
@@ -25,7 +28,7 @@ def test_strings(data: dict, strings: List[str]):
     for field in strings:
         value_exists = data.get(field) is not None
         logger_fn = logger.info if value_exists else logger.warning
-        logger_fn(f"\t\t\t\ttesting \"{field}\"...{'FOUND' if value_exists else 'UNDEFINED'}")
+        logger_fn(f"TESTING \"{field}\"...{'FOUND' if value_exists else 'UNDEFINED'}")
 
 
 def ensure_proper_config_structure(data: dict):
@@ -34,17 +37,18 @@ def ensure_proper_config_structure(data: dict):
     defaults = ["url", "picture"]
     strings = ["private_chat", "private_chat_toggle", "help_command", "invalid_whitelist_reply",
                "removed_from_whitelist", "successful_whitelist_reply", "group_repost_reset_initial_prompt",
-               "group_repost_reset_admin_only", "group_repost_reset_cancel", "group_repost_data_reset"]
+               "group_repost_reset_admin_only", "group_repost_reset_cancel", "group_repost_data_reset",
+               "stats_command_reply"]
     for repost_strategy in STRATEGIES.values():
         strings.extend(repost_strategy.get_required_strings())
 
-    logger.info("\t\ttesting top-level fields")
+    logger.info("TESTING TOP-LEVEL FIELDS")
     test_strings(data, top_level)
 
-    logger.info("\t\ttesting default callout settings")
+    logger.info("TESTING DEFAULT CALLOUT SETTINGS")
     test_strings(data.get("default_callouts"), defaults)
 
-    logger.info("\t\ttesting bot strings")
+    logger.info("TESTING BOT STRINGS")
     test_strings(data.get("strings"), strings)
 
 

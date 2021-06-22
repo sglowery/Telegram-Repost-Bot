@@ -43,6 +43,8 @@ strings:
   group_repost_reset_cancel: "I won't delete it then."
   group_repost_data_reset: "The group repost data has been reset."
 
+  stats_command_reply: "Unique pictures posted: {num_unique_images:n}\nTotal image reposts: {num_image_reposts:n}\nUnique URLs posted: {num_unique_urls:n}\nTotal URL reposts: {num_url_reposts:n}"
+
   # these three strings are for the verbose callout response style
   repost_alert: "My friend, you've posted unoriginal content!"
   first_repost_callout: "Look, it was here first."

@@ -15,7 +15,7 @@ from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
 from conversation_state import ConversationState
-from utils import flood_protection, ignore_chat_type
+from utils import flood_protection, ignore_chat_type, sum_list_lengths
 from repostitory import Repostitory
 from strategies import RepostCalloutStrategy
 from whitelist_status import WhitelistAddStatus
@@ -48,6 +48,7 @@ class RepostBot:
         self.dp.add_handler(CommandHandler("help", self._repost_bot_help))
         self.dp.add_handler(CommandHandler("settings", self._display_toggle_settings))
         self.dp.add_handler(CommandHandler("whitelist", self._whitelist_command))
+        self.dp.add_handler(CommandHandler("stats", self._stats_command))
 
     def run(self) -> None:
         self.updater.start_polling()
@@ -93,7 +94,8 @@ class RepostBot:
             keyboard_buttons = [[KeyboardButton("Yes"), KeyboardButton("No")]]
             keyboard_markup = ReplyKeyboardMarkup(keyboard_buttons, one_time_keyboard=True, selective=True)
             update.message.reply_text(self.strings["group_repost_reset_initial_prompt"],
-                                      reply_markup=keyboard_markup)
+                                      reply_markup=keyboard_markup,
+                                      quote=True)
             return ConversationState.RESET_CONFIRMATION_STATE
         else:
             update.message.reply_text(self.strings["group_repost_reset_admin_only"])
@@ -105,7 +107,7 @@ class RepostBot:
         if response in ('y', 'ye', 'yes', 'yeah', 'yep', 'aye', 'yis', 'yas', 'uh huh', 'sure', 'indeed'):
             self.repostitory.reset_group_repost_data(update.message.chat.id)
             bot_response = self.strings["group_repost_data_reset"]
-        update.message.reply_text(bot_response, reply_markup=ReplyKeyboardRemove(selective=True))
+        update.message.reply_text(bot_response, reply_markup=ReplyKeyboardRemove(), quote=True)
         return ConversationHandler.END
 
     @flood_protection("help")
@@ -125,24 +127,36 @@ class RepostBot:
     @ignore_chat_type(Chat.PRIVATE)
     @flood_protection("whitelist")
     def _whitelist_command(self, update: Update, context: CallbackContext) -> None:
-        group_id = update.message.chat.id
         reply_message = update.message.reply_to_message
         if reply_message is None:
-            update.message.reply_text(self.strings["invalid_whitelist_reply"])
+            update.message.reply_text(self.strings["invalid_whitelist_reply"], quote=True)
         else:
             whitelist_command_result = self.repostitory.process_whitelist_command_on_message(update.message.reply_to_message)
-            reply_id = reply_message.message_id
             if whitelist_command_result == WhitelistAddStatus.ALREADY_EXISTS:
-                context.bot.send_message(group_id, self.strings["removed_from_whitelist"])
+                update.message.reply_text(self.strings["removed_from_whitelist"], quote=True)
             elif whitelist_command_result == WhitelistAddStatus.FAIL:
-                update.message.reply_text(self.strings["invalid_whitelist_reply"])
+                update.message.reply_text(self.strings["invalid_whitelist_reply"], quote=True)
             else:
-                update.message.reply_text(self.strings["successful_whitelist_reply"], reply_to_message_id=reply_id)
+                update.message.reply_text(self.strings["successful_whitelist_reply"], quote=True)
 
-    @flood_protection("userid")
-    def _user_id_command(self, update: Update, context: CallbackContext) -> None:
-        if update.message.chat.type == "private":
-            update.message.reply_text(str(update.message.from_user.id))
+    @ignore_chat_type(Chat.PRIVATE)
+    @flood_protection("stats")
+    def _stats_command(self, update: Update, context: CallbackContext) -> None:
+        group_reposts: Dict[str, List[int]] = self.repostitory.get_group_data(update.message.chat.id).get('reposts')
+        url_reposts = dict()
+        image_reposts = dict()
+        for key, repost_list in group_reposts.items():
+            only_reposts = repost_list[1:]
+            (url_reposts if len(key) == 64 else image_reposts).update({key: only_reposts})
+        num_unique_images = len(image_reposts.keys())
+        num_image_reposts = sum_list_lengths(image_reposts.values())
+        num_unique_urls = len(url_reposts.keys())
+        num_url_reposts = sum_list_lengths(url_reposts.values())
+        response = self.strings["stats_command_reply"].format(num_unique_images=num_unique_images,
+                                                              num_image_reposts=num_image_reposts,
+                                                              num_unique_urls=num_unique_urls,
+                                                              num_url_reposts=num_url_reposts)
+        update.message.reply_text(response, quote=True)
 
     @flood_protection("call_out_reposts")
     def _call_out_reposts(self,
