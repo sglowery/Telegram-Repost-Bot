@@ -32,6 +32,7 @@ strings:
    /settings - Display the current tracking settings.\n
    /whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
    /reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets tracking to defaults. This can't be undone.\n\n
+   /stats - Display number of unique images and URLs I have seen, and how many reposts of each. Note that the first time it is seen is not counted as a repost.\n\n
    Flood protection is on a per-user-per-command basis, including calling out reposts. I will still track posts when being flooded, but will not call them out."
 
   invalid_whitelist_reply: "Use /whitelist while replying to a message so I can whitelist what's in it."
