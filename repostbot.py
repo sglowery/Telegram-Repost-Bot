@@ -117,7 +117,7 @@ class RepostBot:
         bot.send_message(update.message.chat.id, self.strings["help_command"].format(name=bot_name))
 
     @ignore_chat_type(Chat.PRIVATE)
-    @flood_protection("toggle")
+    @flood_protection("settings")
     def _display_toggle_settings(self, update: Update, context: CallbackContext) -> None:
         group_id = update.message.chat.id
         group_toggles = self.repostitory.get_group_data(group_id).get("track")
