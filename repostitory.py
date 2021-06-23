@@ -64,7 +64,7 @@ class Repostitory:
     def process_whitelist_command_on_message(self, message: Message) -> WhitelistAddStatus:
         group_data = self.get_group_data(message.chat.id)
         whitelisted_hashes: List[str] = group_data.get("whitelist", list())
-        hashes = self._get_message_entity_hashes(message)
+        hashes = self.get_message_entity_hashes(message)
         picture_key = hashes.picture_key
         url_keys = hashes.url_keys
         keys_in_message = [picture_key, *url_keys] if picture_key is not None else url_keys

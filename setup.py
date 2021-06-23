@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='reeepostbot',
-    version='0.3.0',
+    version='0.3.1',
     url='https://github.com/sglowery/Telegram-Repost-Bot',
     modules=['repostbot'],
     license='GNU General Public License v3.0',
