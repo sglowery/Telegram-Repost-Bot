@@ -1,23 +1,13 @@
 import logging
 from datetime import datetime
-from typing import Dict, Callable, NoReturn, List, TypeVar, ValuesView
+from typing import Dict, Callable, NoReturn, ValuesView
 
-from telegram import Update
+from telegram import Update, User
 from telegram.ext import CallbackContext
 
 logger = logging.getLogger("Flood Protection")
 
-
 _flood_track: Dict[int, Dict[str, datetime]] = dict()
-
-
-def ignore_chat_type(chat_type: str):
-    def _wrapped(func: Callable):
-        def _continue_if_not_chat_type(repostbot_instance, update: Update, context: CallbackContext, *args, **kwargs):
-            if update.message.chat.type != chat_type:
-                return func(repostbot_instance, update, context, *args, **kwargs)
-        return _continue_if_not_chat_type
-    return _wrapped
 
 
 def flood_protection(command_key: str):
@@ -32,7 +22,9 @@ def flood_protection(command_key: str):
                 return func(repostbot_instance, update, context, *args, **kwargs)
             else:
                 logger.info(f"Anti-flood protection on key {command_key}")
+
         return _check_track_and_call
+
     return _wrapped
 
 
@@ -57,3 +49,11 @@ def _clean_up_tracking(threshold: int):
 
 def sum_list_lengths(lists: ValuesView) -> int:
     return sum(len(_list) for _list in lists)
+
+
+def is_anonymous_admin(user: User) -> bool:
+    return user.id == 1087968824
+
+
+def is_post_from_channel(user: User) -> bool:
+    return user.id == 777000

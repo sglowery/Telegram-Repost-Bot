@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+from dataclasses import dataclass
 from typing import List, Dict, Optional
 from typing import NoReturn
 
@@ -16,10 +17,10 @@ from whitelist_status import WhitelistAddStatus
 logger = logging.getLogger("Repostitory")
 
 
-class GetMessageEntityHashesResult:
-    def __init__(self, picture_key: Optional[str], url_keys: List[str]):
-        self.picture_key = picture_key
-        self.url_keys = url_keys
+@dataclass(frozen=True)
+class MessageEntityHashes:
+    picture_key: Optional[str]
+    url_keys: List[str]
 
 
 class Repostitory:
@@ -96,7 +97,7 @@ class Repostitory:
         group_data.update({"track": new_tracking})
         self.save_group_data(group_id, group_data)
 
-    def get_message_entity_hashes(self, message: Message) -> GetMessageEntityHashesResult:
+    def get_message_entity_hashes(self, message: Message) -> MessageEntityHashes:
         picture_key = None
         url_keys = list()
         url_entities = message.parse_entities(types=[MessageEntity.URL])
@@ -113,7 +114,7 @@ class Repostitory:
             for url_entity in url_entities:
                 end_offset = url_entity.offset + url_entity.length
                 url_keys.append(hashlib.sha256(bytes(message.text[url_entity.offset: end_offset], 'utf-8')).hexdigest())
-        return GetMessageEntityHashesResult(picture_key, url_keys)
+        return MessageEntityHashes(picture_key, url_keys)
 
     def _update_repost_data_for_group(self, hashes: List[str], message_id: int, group_id: int) -> NoReturn:
         group_data = self.get_group_data(group_id)
