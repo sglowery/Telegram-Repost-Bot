@@ -3,9 +3,9 @@ import locale
 import logging
 
 from config import get_config_variables
-from repostbot import RepostBot
-from repostitory import Repostitory
-from strategies import STRATEGIES
+from repostbot.repostbot import RepostBot
+from repostbot.repostitory import Repostitory
+from repostbot.strategies import STRATEGIES
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 

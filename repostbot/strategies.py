@@ -6,7 +6,7 @@ from typing import List, NoReturn, Dict, Type
 from telegram import Update, ChatAction, Chat
 from telegram.ext import CallbackContext
 
-from utils import is_anonymous_admin, is_post_from_channel
+from util.utils import is_anonymous_admin, is_post_from_channel
 
 logger = logging.getLogger("Strategies")
 

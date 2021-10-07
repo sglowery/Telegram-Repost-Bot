@@ -12,7 +12,7 @@ from imagehash import average_hash
 from telegram import Message
 from telegram import MessageEntity
 
-from whitelist_status import WhitelistAddStatus
+from repostbot.whitelist_status import WhitelistAddStatus
 
 logger = logging.getLogger("Repostitory")
 

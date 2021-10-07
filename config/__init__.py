@@ -3,7 +3,7 @@ from typing import List
 
 import yaml
 
-from strategies import STRATEGIES, DEFAULT_STRATEGY
+from repostbot.strategies import STRATEGIES, DEFAULT_STRATEGY
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def get_config_variables(config_path: str) -> tuple:
     else:
         logger.warning("User-created config not specified. Proceeding with defaultconfig.yaml")
     try:
-        with open('defaultconfig.yaml', 'r') as f:
+        with open('config/defaultconfig.yaml', 'r') as f:
             default_config_data = yaml.safe_load(f)
     except (FileNotFoundError, TypeError) as e:
         if config_path is None:
@@ -107,7 +107,6 @@ def get_config_variables(config_path: str) -> tuple:
     bot_variables = (repost_data_path, bot_admin_id, telegram_token, default_callouts, bot_strings, hash_size,
                      repost_callout_timeout, auto_call_out, strategy, auto_call_out)
     if any(var is None for var in bot_variables):
-        print(bot_variables)
         raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed")
 
     return repost_data_path, bot_admin_id, telegram_token, default_callouts, bot_strings, hash_size, \

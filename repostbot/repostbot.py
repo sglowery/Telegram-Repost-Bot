@@ -14,11 +14,11 @@ from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
-from conversation_state import ConversationState
-from repostitory import Repostitory
-from strategies import RepostCalloutStrategy
-from utils import flood_protection, sum_list_lengths, is_anonymous_admin
-from whitelist_status import WhitelistAddStatus
+from repostbot.conversation_state import ConversationState
+from repostbot.repostitory import Repostitory
+from repostbot.strategies import RepostCalloutStrategy
+from util.utils import flood_protection, sum_list_lengths, is_anonymous_admin
+from repostbot.whitelist_status import WhitelistAddStatus
 
 logger = logging.getLogger("RepostBot")
 
