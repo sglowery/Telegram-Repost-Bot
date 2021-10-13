@@ -13,6 +13,7 @@ from telegram import Message
 from telegram import MessageEntity
 
 from repostbot.whitelist_status import WhitelistAddStatus
+from util.utils import RepostBotTelegramParams
 
 logger = logging.getLogger("Repostitory")
 
@@ -30,15 +31,15 @@ class Repostitory:
         self.hash_size = hash_size
         self._check_directory()
 
-    def process_message_entities(self, message: Message) -> Dict[str, List[int]]:
-        chat_id = message.chat_id
+    def process_message_entities(self, params: RepostBotTelegramParams) -> Dict[str, List[int]]:
+        chat_id = params.group_id
         self._ensure_group_file(chat_id)
         group_data = self.get_group_data(chat_id)
-        hash_result = self.get_message_entity_hashes(message)
+        hash_result = self.get_message_entity_hashes(params.effective_message)
         picture_key = hash_result.picture_key
         url_keys = hash_result.url_keys
         toggles = group_data.get("track", self.default_callout_settings)
-        message_id = message.message_id
+        message_id = params.effective_message.message_id
         hashes = list()
         self._update_repost_data_for_group(url_keys, message_id, chat_id)
         if picture_key is not None:
@@ -62,8 +63,8 @@ class Repostitory:
             data = json.load(f)
         return data
 
-    def process_whitelist_command_on_message(self, message: Message) -> WhitelistAddStatus:
-        group_data = self.get_group_data(message.chat.id)
+    def process_whitelist_command_on_message(self, message: Message, group_id: int) -> WhitelistAddStatus:
+        group_data = self.get_group_data(group_id)
         whitelisted_hashes: List[str] = group_data.get("whitelist", list())
         hashes = self.get_message_entity_hashes(message)
         picture_key = hashes.picture_key
@@ -78,7 +79,7 @@ class Repostitory:
                 else:
                     whitelisted_hashes.append(key)
             group_data["whitelist"] = whitelisted_hashes
-            self.save_group_data(message.chat.id, group_data)
+            self.save_group_data(group_id, group_data)
             if key_removed:
                 return WhitelistAddStatus.ALREADY_EXISTS
             return WhitelistAddStatus.SUCCESS

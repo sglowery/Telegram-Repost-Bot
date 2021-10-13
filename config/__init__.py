@@ -16,7 +16,7 @@ class NoConfigFileAvailableException(Exception):
     pass
 
 
-def ensure_proper_config_structure(data: dict):
+def _ensure_proper_config_structure(data: dict):
     top_level = ["repost_data_path", "bot_admin_id", "bot_token", "hash_size",
                  "repost_callout_timeout", "auto_call_out", "default_callouts", "strings"]
     defaults = ["url", "picture"]
@@ -70,44 +70,44 @@ def get_config_variables(config_path: str) -> tuple:
 
     if default_config_data is not None:
         logger.info("testing default config file for all required fields")
-        ensure_proper_config_structure(default_config_data)
-        default_repost_data_path = default_config_data.get("repost_data_path", None)
-        default_bot_admin_id = default_config_data.get("bot_admin_id", None)
+        _ensure_proper_config_structure(default_config_data)
         default_telegram_token = default_config_data.get("bot_token", None)
-        default_default_callouts = default_config_data.get("default_callouts", None)
-        default_bot_strings = default_config_data.get("strings", None)
-        default_hash_size = default_config_data.get("hash_size", None)
-        default_repost_callout_timeout = default_config_data.get("repost_callout_timeout", None)
-        default_auto_call_out = default_config_data.get("auto_call_out", None)
+        default_bot_strings = default_config_data.get("strings", {})
+        default_bot_admin_id = default_config_data.get("bot_admin_id", None)
         default_strategy = default_config_data.get("callout_style", DEFAULT_STRATEGY)
+        default_auto_call_out = default_config_data.get("auto_call_out", None)
+        default_repost_callout_timeout = default_config_data.get("repost_callout_timeout", None)
+        default_hash_size = default_config_data.get("hash_size", None)
+        default_repost_data_path = default_config_data.get("repost_data_path", None)
+        default_default_callouts = default_config_data.get("default_callouts", None)
 
-    repost_data_path = default_repost_data_path
-    bot_admin_id = default_bot_admin_id
     telegram_token = default_telegram_token
-    default_callouts = default_default_callouts
     bot_strings = default_bot_strings
-    hash_size = default_hash_size
-    repost_callout_timeout = default_repost_callout_timeout
-    auto_call_out = default_auto_call_out
+    bot_admin_id = default_bot_admin_id
     strategy = default_strategy
+    auto_call_out = default_auto_call_out
+    repost_callout_timeout = default_repost_callout_timeout
+    hash_size = default_hash_size
+    repost_data_path = default_repost_data_path
+    default_callouts = default_default_callouts
 
     if config_path is not None and config_data is not None:
         logger.info("testing user config file for all required fields")
-        ensure_proper_config_structure(config_data)
-        repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
-        bot_admin_id = config_data.get("bot_admin_id", default_bot_admin_id)
+        _ensure_proper_config_structure(config_data)
         telegram_token = config_data.get("bot_token", default_telegram_token)
-        default_callouts = config_data.get("default_callouts", default_default_callouts)
         bot_strings = {**default_bot_strings, **config_data.get("strings", {})}
-        hash_size = config_data.get("hash_size", default_hash_size)
-        repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
-        auto_call_out = config_data.get("auto_call_out", default_auto_call_out)
+        bot_admin_id = config_data.get("bot_admin_id", default_bot_admin_id)
         strategy = config_data.get("callout_style", default_strategy)
+        auto_call_out = config_data.get("auto_call_out", default_auto_call_out)
+        repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
+        hash_size = config_data.get("hash_size", default_hash_size)
+        repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
+        default_callouts = config_data.get("default_callouts", default_default_callouts)
 
-    bot_variables = (repost_data_path, bot_admin_id, telegram_token, default_callouts, bot_strings, hash_size,
-                     repost_callout_timeout, auto_call_out, strategy, auto_call_out)
+    bot_variables = (telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout,
+                     hash_size, repost_data_path, default_callouts)
     if any(var is None for var in bot_variables):
         raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed")
 
-    return repost_data_path, bot_admin_id, telegram_token, default_callouts, bot_strings, hash_size, \
-           repost_callout_timeout, auto_call_out, strategy
+    return telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout, hash_size,\
+           repost_data_path, default_callouts
