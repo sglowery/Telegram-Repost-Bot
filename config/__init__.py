@@ -28,16 +28,16 @@ def _ensure_proper_config_structure(data: dict):
         strings.extend(repost_strategy.get_required_strings())
 
     logger.info("TESTING TOP-LEVEL FIELDS")
-    test_strings(data, top_level)
+    _test_strings(data, top_level)
 
     logger.info("TESTING DEFAULT CALLOUT SETTINGS")
-    test_strings(data.get("default_callouts"), defaults)
+    _test_strings(data.get("default_callouts"), defaults)
 
     logger.info("TESTING BOT STRINGS")
-    test_strings(data.get("strings"), strings)
+    _test_strings(data.get("strings"), strings)
 
 
-def test_strings(data: dict, strings: List[str]):
+def _test_strings(data: dict, strings: List[str]):
     for field in strings:
         value_exists = data.get(field) is not None
         logger_fn = logger.info if value_exists else logger.warning
@@ -64,9 +64,9 @@ def get_config_variables(config_path: str) -> tuple:
         else:
             logger.warning("Could not find defaultconfig.yaml. If your config.yaml is missing anything, this could be an issue.")
 
-    default_repost_data_path, default_bot_admin_id, default_telegram_token, default_default_callouts,\
-        default_bot_strings, default_hash_size, default_repost_callout_timeout, default_auto_call_out, default_strategy\
-        = None, None, None, None, None, None, None, None, None
+    default_telegram_token, default_bot_strings, default_bot_admin_id, default_strategy, default_auto_call_out,\
+        default_repost_callout_timeout, default_hash_size, default_repost_data_path, default_default_callouts\
+        = None, {}, None, DEFAULT_STRATEGY, None, None, None, None, None
 
     if default_config_data is not None:
         logger.info("testing default config file for all required fields")
