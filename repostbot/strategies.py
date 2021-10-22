@@ -3,10 +3,10 @@ import random
 from abc import ABC, abstractmethod
 from typing import List, NoReturn, Dict, Type
 
-from telegram import Update, ChatAction, Chat
+from telegram import ChatAction, Chat
 from telegram.ext import CallbackContext
 
-from util.utils import is_anonymous_admin, is_post_from_channel, RepostBotTelegramParams
+from util.utils import is_post_from_channel, RepostBotTelegramParams
 
 logger = logging.getLogger("Strategies")
 
@@ -18,10 +18,8 @@ def _format_response_with_name(response: str, name: str, **kwargs) -> str:
 def _get_name_to_use(params: RepostBotTelegramParams) -> str:
     user_id = params.sender_id
     forward_from_chat = params.effective_message.forward_from_chat if params.effective_message is not None else None
-    if is_post_from_channel(user_id) or (forward_from_chat and forward_from_chat.type == Chat.CHANNEL):
+    if is_post_from_channel(user_id) or (forward_from_chat is not None and forward_from_chat.type == Chat.CHANNEL):
         return forward_from_chat.title
-    elif is_anonymous_admin(user_id):
-        return "Anonymous Admin"
     else:
         return params.sender_name
 
@@ -91,7 +89,7 @@ class _CallOutNumberOfRepostsStrategy(RepostCalloutStrategy):
                 context: CallbackContext,
                 hash_to_message_id_dict: Dict[str, List[int]],
                 params: RepostBotTelegramParams):
-        super().callout(context, hash_to_message_id_dict)
+        super().callout(context, hash_to_message_id_dict, params)
         context.bot.send_chat_action(params.group_id, ChatAction.TYPING)
         num_reposts = sum(len(message_ids) - 1 for message_ids in hash_to_message_id_dict.values())
         name = _get_name_to_use(params)

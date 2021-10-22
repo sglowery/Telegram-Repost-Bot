@@ -108,8 +108,9 @@ class Repostitory:
             old_time = time.process_time()
             logger.info("getting file...")
             message.bot.get_file(photo).download(path)
+            with Image.open(path) as f:
+                picture_key = str(average_hash(f, hash_size=self.hash_size))
             logger.info(f"done (took {time.process_time() - old_time} seconds)")
-            picture_key = str(average_hash(Image.open(path), hash_size=self.hash_size))
             os.remove(path)
         if len(url_entities) > 0:
             for url_entity in url_entities:

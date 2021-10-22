@@ -1,14 +1,16 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Callable, NoReturn, ValuesView, Optional
+from typing import Dict, Callable, NoReturn, ValuesView, Optional, Any
 
-from telegram import Update, User, Message
+from telegram import Update, Message, Chat
 from telegram.ext import CallbackContext
 
 logger = logging.getLogger("Flood Protection")
 
 _flood_track: Dict[int, Dict[str, datetime]] = dict()
+
+_ALPHA_CHARS = 'abcdefghijklmnopqrstuvwxyz'
 
 
 @dataclass(frozen=True)
@@ -63,8 +65,8 @@ def sum_list_lengths(lists: ValuesView) -> int:
     return sum(len(_list) for _list in lists)
 
 
-def is_anonymous_admin(user_id: int) -> bool:
-    return user_id == 1087968824
+def message_from_anonymous_admin(message: Message) -> bool:
+    return message.from_user is not None and message.from_user.is_bot and message.sender_chat is not None and message.sender_chat.type in (Chat.GROUP, Chat.SUPERGROUP)
 
 
 def is_post_from_channel(user_id: Optional[int]) -> bool:
@@ -78,3 +80,13 @@ def get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
     group_id = effective_message.chat_id
     return RepostBotTelegramParams(group_id, sender_id, sender_name, effective_message)
 
+
+def _strip_nonalpha_chars(text: str) -> str:
+    text_lower = text.lower()
+    return ''.join(character for character in text_lower if character in _ALPHA_CHARS)
+
+
+def get_repost_params(func: Callable):
+    def _wrapped(repostbot_instance, update: Update, context: CallbackContext, *args, **kwargs) -> Any:
+        return func(repostbot_instance, update, context, get_params_from_telegram_update(update), *args, **kwargs)
+    return _wrapped
