@@ -31,18 +31,21 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 - `/settings` - Display what the bot is tracking for the current group
 - `/whitelist` - Reply to a picture or URL with this command to toggle the whitelist status of what you're replying to
 - `/reset` - Only group admins and the user whose ID is set as the bot's admin can call this. Will reset a group's repost and whitelist data and revert tracking to the default settings
-- `/stats` - Show some basic repost stats in the group
+- `/stats` - Show some basic stats about reposts vs. unique posts in the current group.
 
 # How To Use
 
-- ## Groups
+- ## Private chats
+  - You can't do anything in private chats besides use the `/help` command.
+
+- ## Groups and Supergroups
 
   - Add the bot to your group.
   - Use commands to interact with it.
-  - Use the `/settings` command to see what's being tracked, and use `/toggle` to change the settings if desired.
+  - Use the `/settings` command to see what's being tracked, and use `/toggle` with the `picture` and/or `url` arguments to change the settings if desired.
   - Admins can `/reset` the group's repost data, clearing it entirely.
   - Is RepostBot calling out something that you don't want it to? Reply to the message containing what you don't want called out anymore and use the `/whitelist` command.
-    - Use this command again to remove it from the whitelist.
+    - Use this command again while replying to a message with a whitelisted entity to remove it from the whitelist.
   - Want to know some basic stats about the group's repost data? Use the `/stats` command.
   - RepostBot has anti-flood measures implemented for commands and repost callouts. If it appears the bot is unresponsive, wait a minute and try again. If it's still not responsive, try a command like `/help`. If that doesn't work, it's likely the bot is down.
   
@@ -50,7 +53,9 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 
   - RepostBot can be added to channels, but has limited functionality:
     - It can still track pictures and URLs and abide by the default settings for tracking callouts.
-    - It can _not_ receive commands
+    - It can _not_ receive commands.
+  - If you have a discussion group linked, do not put RepostBot in both the channel and the discussion group.
+    - Linked discussion groups function like normal groups and RepostBot will work normally and will track posts that get forwarded from the channel.
 
 # Repost Bot Updates
 
