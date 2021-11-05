@@ -41,9 +41,9 @@ class Repostitory:
         toggles = group_data.get("track", self.default_callout_settings)
         message_id = params.effective_message.message_id
         hashes = list()
-        self._update_repost_data_for_group(url_keys, message_id, chat_id)
+        self._update_repost_data_for_group(chat_id, message_id, url_keys)
         if picture_key is not None:
-            self._update_repost_data_for_group([picture_key], message_id, chat_id)
+            self._update_repost_data_for_group(chat_id, message_id, [picture_key])
             if toggles["picture"]:
                 hashes.append(picture_key)
         if toggles["url"]:
@@ -118,7 +118,7 @@ class Repostitory:
                 url_keys.append(hashlib.sha256(bytes(message.text[url_entity.offset: end_offset], 'utf-8')).hexdigest())
         return MessageEntityHashes(picture_key, url_keys)
 
-    def _update_repost_data_for_group(self, hashes: List[str], message_id: int, group_id: int) -> NoReturn:
+    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: List[str]) -> NoReturn:
         group_data = self.get_group_data(group_id)
         group_reposts = group_data.get("reposts")
         for entity_hash in hashes:
