@@ -17,6 +17,7 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 - Create a copy of defaultconfig.yaml, name it whatever you want, add your token from BotFather and replace any of the string values you want.
   - Note: Do not use defaultconfig.yaml as your primary config; it will receive updates if new configuration options and strings are added.
 - Run Repost Bot with the command `python main.py -c CONFIG_FILE_PATH`
+  - If you want to use environment variables to set the Telegram API token and the admin ID, run the above command with `-e` as well. This will be handy if you want to run this on a service like Heroku
 - Add the bot to your group and enjoy your oasis of original content!
 
 # If you don't want to run your own:

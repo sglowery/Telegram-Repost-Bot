@@ -1,7 +1,9 @@
 import logging
+import os
 from typing import List
 
 import yaml
+from dotenv import dotenv_values
 
 from repostbot.strategies import STRATEGIES, DEFAULT_STRATEGY
 
@@ -104,10 +106,27 @@ def get_config_variables(config_path: str) -> tuple:
         repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
         default_callouts = config_data.get("default_callouts", default_default_callouts)
 
-    bot_variables = (telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout,
-                     hash_size, repost_data_path, default_callouts)
+    bot_variables = (bot_strings, strategy, auto_call_out, repost_callout_timeout, hash_size, repost_data_path, default_callouts)
     if any(var is None for var in bot_variables):
-        raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed")
+        raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed.")
+
+    if any(var is None for var in [telegram_token, bot_admin_id]):
+        logger.warning("Missing Telegram token and bot admin ID; if using environment variables, this is fine.")
 
     return telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout, hash_size,\
            repost_data_path, default_callouts
+
+
+def get_environment_variables():
+    logger.info("Getting Telegram token and bot admin ID from environment variables")
+    env_variables = {
+        **dotenv_values(),
+        **os.environ
+    }
+    telegram_token = env_variables.get("TELEGRAM_TOKEN")
+    bot_admin_id = env_variables.get("BOT_ADMIN_ID")
+
+    if telegram_token is None or bot_admin_id is None:
+        raise MissingConfigParameterException("Failed to load Telegram token from environment variable, can't proceed.")
+
+    return telegram_token, bot_admin_id

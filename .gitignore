@@ -6,3 +6,4 @@ tests/
 /venv/
 
 config/config.yaml
+.env
