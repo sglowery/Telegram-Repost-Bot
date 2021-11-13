@@ -27,12 +27,12 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 
 # Commands
 
-- `/help` - Bot will reply with information on what it does and what it stores
-- `/toggle` - Toggles tracking of individual entity types (can toggle multiple at a time)
+- `/help` - Bot will reply with information on what it does and what it stores.
+- `/toggle` - Toggles tracking of individual entity types (can toggle multiple at a time).
   - Valid arguments: `picture`, `url`
-- `/settings` - Display what the bot is tracking for the current group
-- `/whitelist` - Reply to a picture or URL with this command to toggle the whitelist status of what you're replying to
-- `/reset` - Only group admins and the user whose ID is set as the bot's admin can call this. Will reset a group's repost and whitelist data and revert tracking to the default settings
+- `/settings` - Display what the bot is tracking for the current group.
+- `/whitelist` - Reply to a picture or URL with this command to toggle the whitelist status of what you're replying to.
+- `/reset` - Only group admins and the user whose ID is set as the bot's admin can call this. Will reset a group's repost and whitelist data and revert tracking to the default settings.
 - `/stats` - Show some basic stats about reposts vs. unique posts in the current group.
 
 # How To Use
