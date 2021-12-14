@@ -74,7 +74,7 @@ def is_post_from_channel(user_id: Optional[int]) -> bool:
 
 
 def get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
-    effective_message: Message = update.channel_post if update.channel_post is not None else update.message
+    effective_message = update.channel_post if update.channel_post is not None else update.effective_message
     sender_id = effective_message.sender_chat.id if effective_message.sender_chat is not None else effective_message.from_user.id
     sender_name = effective_message.sender_chat.title if effective_message.sender_chat is not None else effective_message.from_user.first_name
     group_id = effective_message.chat_id

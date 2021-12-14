@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 locale.setlocale(locale.LC_ALL, 'en_US')
 
-if __name__ == "__main__":
+
+def main():
     parser = argparse.ArgumentParser(description='Run an instance of Repost Bot over Telegram')
     parser.add_argument('-c', '--config', type=str, help='set path of config file relative to this file')
     parser.add_argument('-e', '--environment', help='use environment variables to set API keys', action='store_true', dest='use_env')
@@ -30,3 +31,7 @@ if __name__ == "__main__":
     rpb = RepostBot(telegram_token, bot_strings, bot_admin_id, STRATEGIES.get(strategy), auto_call_out,
                     repost_callout_timeout, hash_size, repost_data_path, default_callouts)
     rpb.run()
+
+
+if __name__ == "__main__":
+    main()
