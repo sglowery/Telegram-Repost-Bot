@@ -2,8 +2,8 @@ import hashlib
 import json
 import logging
 import os
-import time
 from dataclasses import dataclass
+from timeit import default_timer as timer
 from typing import List, Dict, Optional
 from typing import NoReturn
 
@@ -105,12 +105,13 @@ class Repostitory:
         if message.photo:
             photo = message.photo[-1]
             path = f"{photo.file_id}.jpg"
-            old_time = time.process_time()
+            start_time = timer()
             logger.info("getting file...")
             message.bot.get_file(photo).download(path)
             with Image.open(path) as f:
                 picture_key = str(average_hash(f, hash_size=self.hash_size))
-            logger.info(f"done (took {time.process_time() - old_time} seconds)")
+            end_time = timer()
+            logger.info(f"done (took {(end_time - start_time):.2f} seconds)")
             os.remove(path)
         if len(url_entities) > 0:
             for url_entity in url_entities:
