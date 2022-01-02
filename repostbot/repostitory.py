@@ -115,7 +115,8 @@ class Repostitory:
         if len(url_entities) > 0:
             for url_entity in url_entities:
                 end_offset = url_entity.offset + url_entity.length
-                url_keys.append(hashlib.sha256(bytes(message.text[url_entity.offset: end_offset], 'utf-8')).hexdigest())
+                url_hash = hashlib.sha256(bytes(message.text[url_entity.offset: end_offset], 'utf-8')).hexdigest()
+                url_keys.append(url_hash)
         return MessageEntityHashes(picture_key, url_keys)
 
     def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: List[str]) -> NoReturn:
