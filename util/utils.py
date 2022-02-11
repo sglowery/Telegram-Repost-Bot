@@ -1,8 +1,9 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Callable, NoReturn, ValuesView, Optional, Any
+from typing import Dict, Callable, ValuesView, Optional, Any
 
+import telegram.constants
 from telegram import Update, Message, Chat
 from telegram.ext import CallbackContext
 
@@ -42,7 +43,7 @@ def flood_protection(command_key: str):
     return _wrapped
 
 
-def _init_tracking_for_user(user_id: int) -> NoReturn:
+def _init_tracking_for_user(user_id: int) -> None:
     if _flood_track.get(user_id) is None:
         _flood_track.update({user_id: dict()})
 
@@ -70,7 +71,7 @@ def message_from_anonymous_admin(message: Message) -> bool:
 
 
 def is_post_from_channel(user_id: Optional[int]) -> bool:
-    return user_id == 777000 if user_id is not None else False
+    return user_id == telegram.constants.SERVICE_CHAT_ID if user_id is not None else False
 
 
 def get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
@@ -81,7 +82,7 @@ def get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
     return RepostBotTelegramParams(group_id, sender_id, sender_name, effective_message)
 
 
-def _strip_nonalpha_chars(text: str) -> str:
+def strip_nonalpha_chars(text: str) -> str:
     text_lower = text.lower()
     return ''.join(character for character in text_lower if character in _ALPHA_CHARS)
 

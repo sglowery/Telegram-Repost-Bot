@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use ujson library to try and help with performance
+
+### Removed
+
+- Removed auto callout functionality temporarily
+
 ### Fixed
 
 - Fix picture download timer not measuring time correctly.

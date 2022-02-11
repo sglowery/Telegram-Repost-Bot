@@ -1,7 +1,7 @@
 import logging
 import random
 from abc import ABC, abstractmethod
-from typing import List, NoReturn, Dict, Type
+from typing import List, Dict, Type
 
 from telegram import ChatAction, Chat
 from telegram.ext import CallbackContext
@@ -32,7 +32,7 @@ class RepostCalloutStrategy(ABC):
     def callout(self,
                 context: CallbackContext,
                 hash_to_message_id_dict: Dict[str, List[int]],
-                params: RepostBotTelegramParams) -> NoReturn:
+                params: RepostBotTelegramParams) -> None:
         logger.info("Calling out repost")
 
     @staticmethod
@@ -60,6 +60,7 @@ class _CallOutAllIndividualRepostsStrategy(RepostCalloutStrategy):
         bot = context.bot
         name = _get_name_to_use(params)
         for message_ids in hash_to_message_id_dict.values():
+            bot.send_chat_action(cid, ChatAction.TYPING)
             message.reply_text(self.strings["repost_alert"])
             prev_msg = ""
             for i, repost_msg in enumerate(message_ids[:-1]):
@@ -109,4 +110,5 @@ def get_strategy(strategy: str) -> Type[RepostCalloutStrategy]:
     try:
         return STRATEGIES[strategy.lower().strip()]
     except KeyError:
-        logger.error(f"Cannot find strategy for {strategy}")
+        logger.error(f"Cannot find strategy for {strategy}, using default {DEFAULT_STRATEGY}")
+        return STRATEGIES[DEFAULT_STRATEGY]

@@ -1,16 +1,15 @@
 import hashlib
-import json
 import logging
 import os
 from dataclasses import dataclass
 from timeit import default_timer as timer
-from typing import List, Dict, Optional
-from typing import NoReturn
+from typing import List, Dict, Optional, Union
 
 from PIL import Image
 from imagehash import average_hash
 from telegram import Message
 from telegram import MessageEntity
+import ujson as json
 
 from repostbot.whitelist_status import WhitelistAddStatus
 from util.utils import RepostBotTelegramParams
@@ -53,7 +52,7 @@ class Repostitory:
         whitelist = group_data.get("whitelist", [])
         return {entity_hash: reposts.get(entity_hash, []) for entity_hash in hashes if entity_hash not in whitelist}
 
-    def save_group_data(self, chat_id: int, new_group_data) -> NoReturn:
+    def save_group_data(self, chat_id: int, new_group_data: dict) -> None:
         with open(self._get_path_for_group_data(chat_id), 'w') as f:
             json.dump(new_group_data, f, indent=2)
 
@@ -85,7 +84,7 @@ class Repostitory:
             return WhitelistAddStatus.SUCCESS
         return WhitelistAddStatus.FAIL
 
-    def reset_group_repost_data(self, group_id: int) -> NoReturn:
+    def reset_group_repost_data(self, group_id: int) -> None:
         self.save_group_data(group_id, self._get_empty_group_file_structure())
 
     def get_tracking_data(self, group_id: int):
@@ -106,12 +105,12 @@ class Repostitory:
             photo = message.photo[-1]
             path = f"{photo.file_id}.jpg"
             start_time = timer()
-            logger.info("getting file...")
+            logger.info("Getting file...")
             message.bot.get_file(photo).download(path)
             with Image.open(path) as f:
                 picture_key = str(average_hash(f, hash_size=self.hash_size))
             end_time = timer()
-            logger.info(f"done (took {(end_time - start_time):.2f} seconds)")
+            logger.info(f"Done (took {(end_time - start_time):.2f} seconds)")
             os.remove(path)
         if len(url_entities) > 0:
             for url_entity in url_entities:
@@ -120,32 +119,32 @@ class Repostitory:
                 url_keys.append(url_hash)
         return MessageEntityHashes(picture_key, url_keys)
 
-    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: List[str]) -> NoReturn:
+    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: List[str]) -> None:
         group_data = self.get_group_data(group_id)
         group_reposts = group_data.get("reposts")
         for entity_hash in hashes:
             list_of_message_ids = group_reposts.get(entity_hash, None)
             if list_of_message_ids is None or len(list_of_message_ids) == 0:
-                logger.info("new picture or url detected")
+                logger.info("New picture or url detected")
                 group_reposts.update({entity_hash: [message_id]})
             else:
                 list_of_message_ids.append(message_id)
         self.save_group_data(group_id, group_data)
 
-    def _ensure_group_file(self, group_id: int) -> NoReturn:
+    def _ensure_group_file(self, group_id: int) -> None:
         self._check_directory()
         try:
             with open(self._get_path_for_group_data(group_id)):
                 pass
         except FileNotFoundError:
-            logger.info("group has no file; making one")
+            logger.info("Group has no file; making one")
             with open(self._get_path_for_group_data(group_id), 'w') as f:
                 json.dump(self._get_empty_group_file_structure(), f, indent=2)
 
-    def _get_path_for_group_data(self, group_id: int) -> str:
+    def _get_path_for_group_data(self, group_id: Union[int, str]) -> str:
         return f"{self.data_path}/{group_id}.json"
 
-    def _check_directory(self) -> NoReturn:
+    def _check_directory(self) -> None:
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
 

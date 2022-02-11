@@ -2,24 +2,24 @@ import logging
 from typing import Dict, Type
 from typing import List
 
-from telegram import ChatAction, Chat
+from telegram import Chat
 from telegram import KeyboardButton
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyKeyboardRemove
 from telegram import Update
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, Dispatcher
 from telegram.ext import CommandHandler
 from telegram.ext import ConversationHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
-from repostbot.conversation_state import ConversationState
-from repostbot.repostitory import Repostitory
-from repostbot.strategies import RepostCalloutStrategy
-from repostbot.whitelist_status import WhitelistAddStatus
 from util.utils import flood_protection, sum_list_lengths, message_from_anonymous_admin, RepostBotTelegramParams, \
-    _strip_nonalpha_chars, get_repost_params
+    strip_nonalpha_chars, get_repost_params
+from .conversation_state import ConversationState
+from .repostitory import Repostitory
+from .strategies import RepostCalloutStrategy
+from .whitelist_status import WhitelistAddStatus
 
 logger = logging.getLogger("RepostBot")
 
@@ -46,8 +46,8 @@ class RepostBot:
         self.auto_call_out = auto_call_out
         self.flood_protection_seconds = flood_protection_seconds
 
-        self.updater = Updater(self.token)
-        self.dp = self.updater.dispatcher
+        self.updater: Updater = Updater(self.token)
+        self.dp: Dispatcher = self.updater.dispatcher
         self.dp.add_handler(MessageHandler(NON_PRIVATE_GROUP_FILTERS &
                                            (Filters.photo | Filters.entity("url")) &
                                            ~(Filters.forwarded & ~Filters.sender_chat.channel),
@@ -61,14 +61,14 @@ class RepostBot:
             conversation_timeout=60
         ))
 
-        self.dp.add_handler(CommandHandler("help", self._repost_bot_help))
+        self.dp.add_handler(CommandHandler("help", self._repost_bot_help, run_async=True))
         self.dp.add_handler(CommandHandler("settings", self._display_toggle_settings, filters=NON_PRIVATE_GROUP_FILTERS))
         self.dp.add_handler(CommandHandler("whitelist", self._whitelist_command, filters=NON_PRIVATE_GROUP_FILTERS))
         self.dp.add_handler(CommandHandler("stats", self._stats_command, filters=NON_PRIVATE_GROUP_FILTERS))
 
     def run(self) -> None:
         self.updater.start_polling()
-        logger.info("bot is running")
+        logger.info("Bot is running")
         self.updater.idle()
 
     @get_repost_params
@@ -121,7 +121,7 @@ class RepostBot:
 
     @get_repost_params
     def _handle_reset_confirmation(self, update: Update, context: CallbackContext, params: RepostBotTelegramParams) -> ConversationState:
-        response = _strip_nonalpha_chars(str(params.effective_message.text))
+        response = strip_nonalpha_chars(str(params.effective_message.text))
         bot_response = self.strings["group_repost_reset_cancel"]
         if response in ('y', 'ye', 'yes', 'yeah', 'yep', 'aye', 'yis', 'yas', 'uhhuh', 'sure', 'indeed'):
             self.repostitory.reset_group_repost_data(params.group_id)
@@ -132,8 +132,7 @@ class RepostBot:
     @flood_protection("help")
     @get_repost_params
     def _repost_bot_help(self, update: Update, context: CallbackContext, params: RepostBotTelegramParams) -> None:
-        bot = context.bot
-        bot_name = bot.get_me().first_name
+        bot_name = context.bot.get_me().first_name
         params.effective_message.reply_text(self.strings["help_command"].format(name=bot_name), quote=True)
 
     @flood_protection("settings")
@@ -185,7 +184,4 @@ class RepostBot:
                           context: CallbackContext,
                           params: RepostBotTelegramParams,
                           hash_to_message_id_dict: Dict[str, List[int]]) -> None:
-        bot = context.bot
-        cid = params.group_id
-        bot.send_chat_action(cid, ChatAction.TYPING)
         self.repost_callout_strategy.callout(context, hash_to_message_id_dict, params)
