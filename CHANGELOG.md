@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Update Pillow to 9.0.0
+- Update Pillow to 9.0.1
 
 ## [0.4.0] - 2021-11-20
 
