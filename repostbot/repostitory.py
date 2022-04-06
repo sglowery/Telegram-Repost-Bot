@@ -11,6 +11,7 @@ from telegram import Message
 from telegram import MessageEntity
 import ujson as json
 
+from repostbot.toggles import Toggles
 from repostbot.whitelist_status import WhitelistAddStatus
 from util.utils import RepostBotTelegramParams
 
@@ -33,21 +34,19 @@ class Repostitory:
     def process_message_entities(self, params: RepostBotTelegramParams) -> Dict[str, List[int]]:
         chat_id = params.group_id
         self._ensure_group_file(chat_id)
-        group_data = self.get_group_data(chat_id)
-        hash_result = self.get_message_entity_hashes(params.effective_message)
+        toggles = self.get_toggles_data(chat_id)
+        message = params.effective_message
+        hash_result = self.get_message_entity_hashes(message, toggles)
         picture_key = hash_result.picture_key
         url_keys = hash_result.url_keys
         toggles = group_data.get("track", self.default_callout_settings)
         message_id = params.effective_message.message_id
         hashes = list()
-        self._update_repost_data_for_group(chat_id, message_id, url_keys)
-        if picture_key is not None:
-            self._update_repost_data_for_group(chat_id, message_id, [picture_key])
-            if toggles["picture"]:
-                hashes.append(picture_key)
-        if toggles["url"]:
+        if picture_key is not None and toggles.track_pictures:
+            hashes.append(picture_key)
+        if toggles.track_urls:
             hashes.extend(url_keys)
-        group_data = self.get_group_data(chat_id)
+        group_data = self._update_repost_data_for_group(chat_id, message_id, hashes)
         reposts = group_data.get("reposts", {})
         whitelist = group_data.get("whitelist", [])
         return {entity_hash: reposts.get(entity_hash, []) for entity_hash in hashes if entity_hash not in whitelist}
@@ -97,11 +96,11 @@ class Repostitory:
         group_data.update({"track": new_tracking})
         self.save_group_data(group_id, group_data)
 
-    def get_message_entity_hashes(self, message: Message) -> MessageEntityHashes:
+    def get_message_entity_hashes(self, message: Message, toggles: Toggles) -> MessageEntityHashes:
         picture_key = None
         url_keys = list()
         url_entities = message.parse_entities(types=[MessageEntity.URL])
-        if message.photo:
+        if message.photo and toggles.track_pictures:
             photo = message.photo[-1]
             path = f"{photo.file_id}.jpg"
             start_time = timer()
@@ -112,7 +111,7 @@ class Repostitory:
             end_time = timer()
             logger.info(f"Done (took {(end_time - start_time):.2f} seconds)")
             os.remove(path)
-        if len(url_entities) > 0:
+        if len(url_entities) > 0 and toggles.track_urls:
             for url_entity in url_entities:
                 end_offset = url_entity.offset + url_entity.length
                 url_hash = hashlib.sha256(bytes(message.text[url_entity.offset: end_offset], 'utf-8')).hexdigest()
@@ -130,6 +129,7 @@ class Repostitory:
             else:
                 list_of_message_ids.append(message_id)
         self.save_group_data(group_id, group_data)
+        return group_data
 
     def _ensure_group_file(self, group_id: int) -> None:
         self._check_directory()

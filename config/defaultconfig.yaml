@@ -28,7 +28,7 @@ strings:
 
   help_command: "I'm {name}. I analyze the pictures and URLs you send and call out reposts.\n
    I store the message id, and hashed versions of the URLs and pictures you send. GIFs and videos are not tracked.\n\n
-   /toggle [url | picture] - Toggles whether I track URLs or pictures. You can toggle both at the same time with /toggle url picture. Reposts of untracked types will still be logged, but not called out.\n
+   /toggle [url | picture] - Toggles tracking for all the passed arguments, listed prior. Untracked repost types will not be logged nor acknowledged.\n
    /settings - Display the current tracking settings.\n
    /whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
    /reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets tracking to defaults. This can't be undone.\n\n
