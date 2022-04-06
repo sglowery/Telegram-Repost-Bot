@@ -35,11 +35,38 @@ strings:
    /stats - Display number of unique images and URLs I have seen, and how many reposts of each. Note that the first time it is seen is not counted as a repost.\n\n
    Flood protection is on a per-user-per-command basis, including calling out reposts. I will still track posts when being flooded, but will not call them out."
 
+  settings_command_response: "RepostBot toggleable settings:"
+  'true': "True"
+  'false': "False"
+
   invalid_whitelist_reply: "Use /whitelist while replying to a message so I can whitelist what's in it."
   removed_from_whitelist: "I'll start tracking reposts of that again."
   successful_whitelist_reply: "I won't track reposts of that from now on."
 
   group_repost_reset_initial_prompt: "Are you sure you want to delete the group's repost data? This is irreversible."
+  group_reset_yes: "Yes"
+  group_reset_no: "No"
+  group_reset_confirmation_responses: [
+    "y",
+    "ye",
+    "yes",
+    "yea",
+    "yeah",
+    "yep",
+    "yeppers",
+    "affirmative",
+    "mhm",
+    "mhmm",
+    "indeed",
+    "yas",
+    "si",
+    "yis",
+    "do it",
+    "go ahead",
+    "proceed",
+    "go",
+    "go on",
+  ]
   group_repost_reset_admin_only: "Only admins can do this action."
   group_repost_reset_cancel: "I won't delete it then."
   group_repost_data_reset: "The group repost data has been reset."

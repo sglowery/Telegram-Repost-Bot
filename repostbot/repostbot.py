@@ -111,7 +111,9 @@ class RepostBot:
         if user_id == self.admin_id or \
                 user_id in (chat_member.user.id for chat_member in chat.get_administrators()) or \
                 message_from_anonymous_admin(message):
-            keyboard_buttons = [[KeyboardButton("Yes"), KeyboardButton("No")]]
+            keyboard_buttons = [
+                [KeyboardButton(self.strings["group_reset_yes"]), KeyboardButton(self.strings["group_reset_no"])]
+            ]
             keyboard_markup = ReplyKeyboardMarkup(keyboard_buttons, one_time_keyboard=True, selective=True)
             message.reply_text(self.strings["group_repost_reset_initial_prompt"],
                                reply_markup=keyboard_markup,
@@ -125,7 +127,7 @@ class RepostBot:
     def _handle_reset_confirmation(self, update: Update, context: CallbackContext, params: RepostBotTelegramParams) -> ConversationState:
         response = strip_nonalpha_chars(str(params.effective_message.text))
         bot_response = self.strings["group_repost_reset_cancel"]
-        if response in ('y', 'ye', 'yes', 'yeah', 'yep', 'aye', 'yis', 'yas', 'uhhuh', 'sure', 'indeed'):
+        if response in self.strings["group_reset_confirmation_responses"]:
             self.repostitory.reset_group_repost_data(params.group_id)
             bot_response = self.strings["group_repost_data_reset"]
         params.effective_message.reply_text(bot_response, reply_markup=ReplyKeyboardRemove(), quote=True)
