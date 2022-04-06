@@ -25,6 +25,10 @@ logger = logging.getLogger("RepostBot")
 
 NON_PRIVATE_GROUP_FILTERS = Filters.chat_type.group | Filters.chat_type.supergroup | Filters.chat_type.channel
 
+CHECK_FOR_REPOST_FILTERS = NON_PRIVATE_GROUP_FILTERS & \
+                           (Filters.photo | Filters.entity("url")) & \
+                           ~(Filters.forwarded & ~Filters.sender_chat.channel)
+
 
 class RepostBot:
 
@@ -48,10 +52,7 @@ class RepostBot:
 
         self.updater: Updater = Updater(self.token)
         self.dp: Dispatcher = self.updater.dispatcher
-        self.dp.add_handler(MessageHandler(NON_PRIVATE_GROUP_FILTERS &
-                                           (Filters.photo | Filters.entity("url")) &
-                                           ~(Filters.forwarded & ~Filters.sender_chat.channel),
-                                           self._check_potential_repost))
+        self.dp.add_handler(MessageHandler(CHECK_FOR_REPOST_FILTERS, self._check_potential_repost))
         self.dp.add_handler(CommandHandler("toggle", self._toggle_tracking, filters=NON_PRIVATE_GROUP_FILTERS))
 
         self.dp.add_handler(ConversationHandler(
@@ -153,12 +154,12 @@ class RepostBot:
             message.reply_text(self.strings["invalid_whitelist_reply"], quote=True)
         else:
             whitelist_command_result = self.repostitory.process_whitelist_command_on_message(reply_message, params.group_id)
+            response = self.strings["successful_whitelist_reply"]
             if whitelist_command_result == WhitelistAddStatus.ALREADY_EXISTS:
-                message.reply_text(self.strings["removed_from_whitelist"], quote=True)
+                response = self.strings["removed_from_whitelist"]
             elif whitelist_command_result == WhitelistAddStatus.FAIL:
-                message.reply_text(self.strings["invalid_whitelist_reply"], quote=True)
-            else:
-                message.reply_text(self.strings["successful_whitelist_reply"], quote=True)
+                response = self.strings["invalid_whitelist_reply"]
+            message.reply_text(response, quote=True)
 
     @flood_protection("stats")
     @get_repost_params

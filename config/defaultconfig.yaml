@@ -6,7 +6,7 @@
 repost_data_path: "groups/"       # the folder where all group repost data will be stored.
 bot_admin_id: 123                 # your personal user id, used to override group admin settings to reset group repost data.
                                   # use the /userid command in a private chat with the bot to echo your telegram user id.
-bot_token: "your token here"      # get this from BotFather
+bot_token: "your token here"      # get this from BotFather.
 hash_size: 22                     # lower numbers = smaller file sizes, but less precise hashes and more false positives.
                                   # try not to go below 20; higher than 24 may result in false negatives.
 repost_callout_timeout: 15        # time in seconds that must pass before repost bot will make another callout in a group.

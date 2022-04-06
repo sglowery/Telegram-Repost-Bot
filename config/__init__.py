@@ -22,10 +22,25 @@ def _ensure_proper_config_structure(data: dict):
     top_level = ["repost_data_path", "bot_admin_id", "bot_token", "hash_size",
                  "repost_callout_timeout", "auto_call_out", "default_callouts", "strings"]
     defaults = ["url", "picture"]
-    strings = ["private_chat", "private_chat_toggle", "help_command", "invalid_whitelist_reply",
-               "removed_from_whitelist", "successful_whitelist_reply", "group_repost_reset_initial_prompt",
-               "group_repost_reset_admin_only", "group_repost_reset_cancel", "group_repost_data_reset",
-               "stats_command_reply"]
+    strings = [
+        "private_chat",
+        "private_chat_toggle",
+        "help_command",
+        "settings_command_response",
+        "true",
+        "false",
+        "invalid_whitelist_reply",
+        "removed_from_whitelist",
+        "successful_whitelist_reply",
+        "group_repost_reset_initial_prompt",
+        "group_reset_yes",
+        "group_reset_no",
+        "group_reset_confirmation_responses",
+        "group_repost_reset_admin_only",
+        "group_repost_reset_cancel",
+        "group_repost_data_reset",
+        "stats_command_reply",
+    ]
     for repost_strategy in STRATEGIES.values():
         strings.extend(repost_strategy.get_required_strings())
 
@@ -66,9 +81,15 @@ def get_config_variables(config_path: str) -> tuple:
         else:
             logger.warning("Could not find defaultconfig.yaml. If your config.yaml is missing anything, this could be an issue.")
 
-    default_telegram_token, default_bot_strings, default_bot_admin_id, default_strategy, default_auto_call_out,\
-        default_repost_callout_timeout, default_hash_size, default_repost_data_path, default_default_callouts\
-        = None, {}, None, DEFAULT_STRATEGY, None, None, None, None, None
+    default_telegram_token = None
+    default_bot_strings = dict()
+    default_bot_admin_id = None
+    default_strategy = DEFAULT_STRATEGY
+    default_auto_call_out = None
+    default_repost_callout_timeout = None
+    default_hash_size = None
+    default_repost_data_path = None
+    default_default_toggles = None
 
     if default_config_data is not None:
         logger.info("testing default config file for all required fields")
@@ -106,15 +127,30 @@ def get_config_variables(config_path: str) -> tuple:
         repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
         default_callouts = config_data.get("default_callouts", default_default_callouts)
 
-    bot_variables = (bot_strings, strategy, auto_call_out, repost_callout_timeout, hash_size, repost_data_path, default_callouts)
+    bot_variables = (
+        bot_strings,
+        strategy,
+        auto_call_out,
+        repost_callout_timeout,
+        hash_size,
+        repost_data_path,
+        default_toggles
+    )
     if any(var is None for var in bot_variables):
         raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed.")
 
     if any(var is None for var in [telegram_token, bot_admin_id]):
         logger.warning("Missing Telegram token and bot admin ID; if using environment variables, this is fine.")
 
-    return telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout, hash_size,\
-           repost_data_path, default_callouts
+    return telegram_token, \
+           bot_strings, \
+           bot_admin_id, \
+           strategy, \
+           auto_call_out, \
+           repost_callout_timeout, \
+           hash_size, \
+           repost_data_path, \
+           default_toggles
 
 
 def get_environment_variables():
