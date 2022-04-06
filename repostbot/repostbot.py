@@ -65,6 +65,7 @@ class RepostBot:
         self.dp.add_handler(CommandHandler("settings", self._display_toggle_settings, filters=NON_PRIVATE_GROUP_FILTERS))
         self.dp.add_handler(CommandHandler("whitelist", self._whitelist_command, filters=NON_PRIVATE_GROUP_FILTERS))
         self.dp.add_handler(CommandHandler("stats", self._stats_command, filters=NON_PRIVATE_GROUP_FILTERS))
+        self.dp.add_handler(CommandHandler("userid", self._userid_reply, filters=~NON_PRIVATE_GROUP_FILTERS))
 
     def run(self) -> None:
         self.updater.start_polling()
@@ -185,3 +186,6 @@ class RepostBot:
                           params: RepostBotTelegramParams,
                           hash_to_message_id_dict: Dict[str, List[int]]) -> None:
         self.repost_callout_strategy.callout(context, hash_to_message_id_dict, params)
+
+    def _userid_reply(self, update: Update, context: CallbackContext) -> None:
+        update.effective_message.reply_text(update.effective_user.id)
