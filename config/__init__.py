@@ -19,8 +19,17 @@ class NoConfigFileAvailableException(Exception):
 
 
 def _ensure_proper_config_structure(data: dict):
-    top_level = ["repost_data_path", "bot_admin_id", "bot_token", "hash_size",
-                 "repost_callout_timeout", "auto_call_out", "default_callouts", "strings"]
+    top_level = [
+        "repost_data_path",
+        "bot_admin_id",
+        "bot_token",
+        "hash_size",
+        "repost_callout_timeout",
+        "auto_call_out",
+        "callout_style",
+        "default_toggles",
+        "strings"
+    ]
     defaults = ["url", "picture"]
     strings = [
         "private_chat",
@@ -48,7 +57,7 @@ def _ensure_proper_config_structure(data: dict):
     _test_strings(data, top_level)
 
     logger.info("TESTING DEFAULT CALLOUT SETTINGS")
-    _test_strings(data.get("default_callouts"), defaults)
+    _test_strings(data.get("default_toggles"), defaults)
 
     logger.info("TESTING BOT STRINGS")
     _test_strings(data.get("strings"), strings)
@@ -102,7 +111,7 @@ def get_config_variables(config_path: str) -> tuple:
         default_repost_callout_timeout = default_config_data.get("repost_callout_timeout", None)
         default_hash_size = default_config_data.get("hash_size", None)
         default_repost_data_path = default_config_data.get("repost_data_path", None)
-        default_default_callouts = default_config_data.get("default_callouts", None)
+        default_default_toggles = default_config_data.get("default_toggles", None)
 
     telegram_token = default_telegram_token
     bot_strings = default_bot_strings
@@ -112,7 +121,7 @@ def get_config_variables(config_path: str) -> tuple:
     repost_callout_timeout = default_repost_callout_timeout
     hash_size = default_hash_size
     repost_data_path = default_repost_data_path
-    default_callouts = default_default_callouts
+    default_toggles = default_default_toggles
 
     if config_path is not None and config_data is not None:
         logger.info("testing user config file for all required fields")
@@ -125,7 +134,7 @@ def get_config_variables(config_path: str) -> tuple:
         repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
         hash_size = config_data.get("hash_size", default_hash_size)
         repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
-        default_callouts = config_data.get("default_callouts", default_default_callouts)
+        default_toggles = config_data.get("default_toggles", default_default_toggles)
 
     bot_variables = (
         bot_strings,

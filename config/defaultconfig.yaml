@@ -15,7 +15,7 @@ callout_style: "singular"         # "verbose" or "singular". determines if bot c
                                   # addresses it with a single response. warning: "verbose" can be very spammy, but it
                                   # is pretty funny.
                                   #
-default_callouts:                 # repost bot can be configured by default to track URLs and pictures
+default_toggles:                  # repost bot can be configured by default to track URLs and pictures
   url: true                       # users can use the /toggle command to change these at any time
   picture: true
 

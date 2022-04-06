@@ -23,13 +23,13 @@ def main():
     use_env = args.use_env
 
     telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout, hash_size, \
-    repost_data_path, default_callouts = get_config_variables(config_path)
+    repost_data_path, default_toggles = get_config_variables(config_path)
 
     if use_env:
         telegram_token, bot_admin_id = get_environment_variables()
 
     rpb = RepostBot(telegram_token, bot_strings, bot_admin_id, STRATEGIES.get(strategy), auto_call_out,
-                    repost_callout_timeout, hash_size, repost_data_path, default_callouts)
+                    repost_callout_timeout, hash_size, repost_data_path, default_toggles)
     rpb.run()
 
 

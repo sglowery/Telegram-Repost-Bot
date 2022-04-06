@@ -19,6 +19,7 @@ from util.utils import flood_protection, sum_list_lengths, message_from_anonymou
 from .conversation_state import ConversationState
 from .repostitory import Repostitory
 from .strategies import RepostCalloutStrategy
+from .toggles import Toggles
 from .whitelist_status import WhitelistAddStatus
 
 logger = logging.getLogger("RepostBot")
@@ -41,11 +42,11 @@ class RepostBot:
                  flood_protection_seconds: int,
                  hash_size: int,
                  repost_data_path: str,
-                 default_callouts: Dict[str, bool]):
+                 default_toggles: Dict[str, bool]):
         self.token = token
         self.admin_id = admin_id
         self.strings = strings
-        self.repostitory = Repostitory(hash_size, repost_data_path, default_callouts)
+        self.repostitory = Repostitory(hash_size, repost_data_path, default_toggles)
         self.repost_callout_strategy = repost_callout_strategy(self.strings)
         self.auto_call_out = auto_call_out
         self.flood_protection_seconds = flood_protection_seconds
@@ -53,7 +54,7 @@ class RepostBot:
         self.updater: Updater = Updater(self.token)
         self.dp: Dispatcher = self.updater.dispatcher
         self.dp.add_handler(MessageHandler(CHECK_FOR_REPOST_FILTERS, self._check_potential_repost))
-        self.dp.add_handler(CommandHandler("toggle", self._toggle_tracking, filters=NON_PRIVATE_GROUP_FILTERS))
+        self.dp.add_handler(CommandHandler("toggle", self._set_toggles, filters=NON_PRIVATE_GROUP_FILTERS))
 
         self.dp.add_handler(ConversationHandler(
             entry_points=[CommandHandler("reset", self._reset_prompt_from_command, filters=NON_PRIVATE_GROUP_FILTERS)],
@@ -86,7 +87,7 @@ class RepostBot:
 
     @flood_protection("toggle")
     @get_repost_params
-    def _toggle_tracking(self, update: Update, context: CallbackContext, params: RepostBotTelegramParams) -> None:
+    def _set_toggles(self, update: Update, context: CallbackContext, params: RepostBotTelegramParams) -> None:
         message = params.effective_message
         group_type = message.chat.type
         if group_type == Chat.PRIVATE:
@@ -94,12 +95,13 @@ class RepostBot:
         else:
             group_id = message.chat.id
             responses = list()
-            toggle_data = self.repostitory.get_tracking_data(group_id)
-            for arg in ("url", "picture"):
+            toggle_data = self.repostitory.get_toggles_data(group_id)
+            for arg in Toggles.get_toggle_args():
                 if arg in context.args:
                     toggle_data[arg] = not toggle_data[arg]
-                    responses.append(f"Tracking {arg}s: {toggle_data[arg]}")
-            self.repostitory.save_tracking_data(group_id, toggle_data)
+                    display_arg = Toggles.get_toggle_display_name(arg)
+                    responses.append(f"{display_arg}: {toggle_data[arg]}")
+            self.repostitory.save_toggles_data(group_id, toggle_data)
             message.reply_text("\n".join(responses))
 
     @flood_protection("reset")
@@ -142,10 +144,13 @@ class RepostBot:
     @flood_protection("settings")
     @get_repost_params
     def _display_toggle_settings(self, update: Update, context: CallbackContext, params: RepostBotTelegramParams) -> None:
-        group_id = params.group_id
-        group_toggles = self.repostitory.get_group_data(group_id).get("track")
-        response = "\n".join(f"Tracking {k}s: {v}" for k, v in group_toggles.items())
-        params.effective_message.reply_text(response)
+        group_toggles = self.repostitory.get_toggles_data(params.group_id)
+        responses = [self.strings['settings_command_response']]
+        for toggle, value in group_toggles.as_json().items():
+            responses.append(
+                f"{Toggles.get_toggle_display_name(toggle)}: {self.strings['true'] if value else self.strings['false']}"
+            )
+        params.effective_message.reply_text("\n".join(responses))
 
     @flood_protection("whitelist")
     @get_repost_params
