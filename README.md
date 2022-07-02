@@ -28,9 +28,9 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 # Commands
 
 - `/help` - Bot will reply with information on what it does and what it stores.
-- `/toggle` - Toggles tracking of individual entity types (can toggle multiple at a time).
-  - Valid arguments: `picture`, `url`
-- `/settings` - Display what the bot is tracking for the current group.
+- `/toggle` - Toggles various group-wide settings for the bot. Can be called with multiple arguments, e.g. `/toggle url autodelete`
+  - Valid arguments: `picture`, `url`, `autocallout`, `autodelete`
+- `/settings` - Display the bot's settings for the current group.
 - `/whitelist` - Reply to a picture or URL with this command to toggle the whitelist status of what you're replying to.
 - `/reset` - Only group admins and the user whose ID is set as the bot's admin can call this. Will reset a group's repost and whitelist data and revert tracking to the default settings.
 - `/stats` - Show some basic stats about reposts vs. unique posts in the current group.
@@ -44,18 +44,19 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 
   - Add the bot to your group.
   - Use commands to interact with it.
-  - Use the `/settings` command to see what's being tracked, and use `/toggle` with the `picture` and/or `url` arguments to change the settings if desired.
+  - Use the `/settings` command to see what's being tracked, and use `/toggle` with the arguments listed above to change what the bot tracks and how it behaves in the group.
   - Admins can `/reset` the group's repost data, clearing it entirely.
   - Is RepostBot calling out something that you don't want it to? Reply to the message containing what you don't want called out anymore and use the `/whitelist` command.
     - Use this command again while replying to a message with a whitelisted entity to remove it from the whitelist.
   - Want to know some basic stats about the group's repost data? Use the `/stats` command.
-  - RepostBot has anti-flood measures implemented for commands and repost callouts. If it appears the bot is unresponsive, wait a minute and try again. If it's still not responsive, try a command like `/help`. If that doesn't work, it's likely the bot is down.
+  - RepostBot has anti-flood measures implemented for commands and repost callouts. If it appears the bot is unresponsive, wait a minute and try again. If it's still not responsive, try a command like `/help`. If that doesn't work, it's likely the bot is tied up processing other updates or it could be down.
   
 - ## Channels
 
   - RepostBot can be added to channels, but has limited functionality:
     - It can still track pictures and URLs and abide by the default settings for tracking callouts.
     - It can _not_ receive commands.
+      - The bot cannot delete channel posts, but it can delete the post that gets forwarded to the linked discussion group, which will remove the comments for the post and the channel link to the comments.
   - If you have a discussion group linked, do not put RepostBot in both the channel and the discussion group.
     - Linked discussion groups function like normal groups and RepostBot will work normally and will track posts that get forwarded from the channel.
 

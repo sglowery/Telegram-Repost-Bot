@@ -14,8 +14,9 @@ if __name__ == '__main__':
     print("\nMigrating group data files to 0.5.0")
     print("\nFinding main config file...")
     group_data_folder_name = None
+    passed_argument = sys.argv[1] if len(sys.argv) > 1 else None
     config_paths = itertools.product(
-        [sys.argv[1], 'config.yaml', 'defaultconfig.yaml'],
+        [file for file in [passed_argument, 'config.yaml', 'defaultconfig.yaml'] if file is not None],
         ['config', '../config', os.path.curdir, os.path.pardir]
     )
     for config_file_name, config_path in config_paths:
@@ -55,6 +56,7 @@ if __name__ == '__main__':
             with open(file_path) as f:
                 group_data = json.load(f)
             group_data["toggles"] = {**group_data["track"]}
+            group_data["deleted"] = []
             del group_data["track"]
             with open(file_path, 'w') as f:
                 json.dump(group_data, f)

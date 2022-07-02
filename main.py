@@ -4,7 +4,8 @@ import logging
 
 from config import get_config_variables, get_environment_variables
 from repostbot import RepostBot
-from repostbot.strategies import STRATEGIES
+from repostbot.repostitory import Repostitory
+from repostbot.strategies import get_callout_strategy
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -22,14 +23,29 @@ def main():
     config_path = args.config
     use_env = args.use_env
 
-    telegram_token, bot_strings, bot_admin_id, strategy, auto_call_out, repost_callout_timeout, hash_size, \
-    repost_data_path, default_toggles = get_config_variables(config_path)
+    (
+        telegram_token,
+        bot_strings,
+        bot_admin_id,
+        strategy,
+        repost_callout_timeout,
+        hash_size,
+        repost_data_path,
+        default_toggles,
+    ) = get_config_variables(config_path)
 
     if use_env:
         telegram_token, bot_admin_id = get_environment_variables()
 
-    rpb = RepostBot(telegram_token, bot_strings, bot_admin_id, STRATEGIES.get(strategy), auto_call_out,
-                    repost_callout_timeout, hash_size, repost_data_path, default_toggles)
+    repostitory = Repostitory(hash_size, repost_data_path, default_toggles)
+    rpb = RepostBot(
+        telegram_token,
+        bot_strings,
+        bot_admin_id,
+        get_callout_strategy(strategy),
+        repost_callout_timeout,
+        repostitory
+    )
     rpb.run()
 
 

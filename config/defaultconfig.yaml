@@ -9,8 +9,7 @@ bot_admin_id: 123                 # your personal user id, used to override grou
 bot_token: "your token here"      # get this from BotFather.
 hash_size: 22                     # lower numbers = smaller file sizes, but less precise hashes and more false positives.
                                   # try not to go below 20; higher than 24 may result in false negatives.
-repost_callout_timeout: 15        # time in seconds that must pass before repost bot will make another callout in a group.
-auto_call_out: true               # whether the bot should automatically call out reposts or wait for a specific query.
+repost_callout_timeout: 0        # time in seconds that must pass before repost bot will make another callout in a group.
 callout_style: "singular"         # "verbose" or "singular". determines if bot calls out each repost individually or
                                   # addresses it with a single response. warning: "verbose" can be very spammy, but it
                                   # is pretty funny.
@@ -18,6 +17,8 @@ callout_style: "singular"         # "verbose" or "singular". determines if bot c
 default_toggles:                  # repost bot can be configured by default to track URLs and pictures
   url: true                       # users can use the /toggle command to change these at any time
   picture: true
+  autocallout: true              # toggles whether Repost Bot automatically calls out reposts
+  autodelete: false              # toggles whether Repost Bot automatically deletes reposts
 
 # these are the strings used for the bot's various responses, and also for its repost callout strategies.
 # if you create a new strategy, the strings for its responses need to be in here and the keys to refer to it
@@ -28,16 +29,21 @@ strings:
 
   help_command: "I'm {name}. I analyze the pictures and URLs you send and call out reposts.\n
    I store the message id, and hashed versions of the URLs and pictures you send. GIFs and videos are not tracked.\n\n
-   /toggle [url | picture] - Toggles tracking for all the passed arguments, listed prior. Untracked repost types will not be logged nor acknowledged.\n
-   /settings - Display the current tracking settings.\n
+   /toggle [url | picture | autocallout | autodelete] - Toggle various settings for Repost Bot. Untoggling tracking of URLs and pictures means they will not be logged or acknowledged.\n
+   /settings - Display Repost Bot settings for this group.\n
    /whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
    /reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets tracking to defaults. This can't be undone.\n\n
    /stats - Display number of unique images and URLs I have seen, and how many reposts of each. Note that the first time it is seen is not counted as a repost.\n\n
    Flood protection is on a per-user-per-command basis, including calling out reposts. I will still track posts when being flooded, but will not call them out."
 
   settings_command_response: "RepostBot toggleable settings:"
-  'true': "True"
-  'false': "False"
+  enabled: "Enabled"
+  disabled: "Disabled"
+
+  settings_track_pictures: "Track Pictures"
+  settings_track_urls: "Track URLs"
+  settings_auto_callout: "Auto Callout"
+  settings_auto_delete: "Auto Delete"
 
   invalid_whitelist_reply: "Use /whitelist while replying to a message so I can whitelist what's in it."
   removed_from_whitelist: "I'll start tracking reposts of that again."

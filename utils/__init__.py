@@ -1,7 +1,9 @@
+import functools
 import logging
+import string
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Callable, ValuesView, Optional, Any
+from typing import Dict, Callable, ValuesView, Optional, Any, List
 
 import telegram.constants
 from telegram import Update, Message, Chat
@@ -10,8 +12,6 @@ from telegram.ext import CallbackContext
 logger = logging.getLogger("Flood Protection")
 
 _flood_track: Dict[int, Dict[str, datetime]] = dict()
-
-_ALPHA_CHARS = 'abcdefghijklmnopqrstuvwxyz'
 
 
 @dataclass(frozen=True)
@@ -22,9 +22,13 @@ class RepostBotTelegramParams:
     effective_message: Message
 
 
-def flood_protection(command_key: str):
-    def _wrapped(func: Callable):
-        def _check_track_and_call(repostbot_instance, update: Update, context: CallbackContext, *args, **kwargs):
+def flood_protection(command_key: str) -> Callable:
+    def _wrapped(func: Callable) -> Callable:
+        def _check_track_and_call(repostbot_instance,
+                                  update: Update,
+                                  context: CallbackContext,
+                                  *args,
+                                  **kwargs) -> Any:
             logger.info(f"Command called: {command_key}")
             effective_user = update.effective_user if update.effective_user is not None else update.effective_chat
             effective_user_id = effective_user.id
@@ -50,7 +54,7 @@ def _init_tracking_for_user(user_id: int) -> None:
 
 def _clean_up_tracking(threshold: int):
     now = datetime.now()
-    new_track = {
+    updated_flood_track = {
         user_id: {
             command_key: last_command_called
             for command_key, last_command_called in _flood_track.get(user_id).items()
@@ -59,7 +63,7 @@ def _clean_up_tracking(threshold: int):
         for user_id in _flood_track.keys()
     }
     _flood_track.clear()
-    _flood_track.update(new_track)
+    _flood_track.update(updated_flood_track)
 
 
 def sum_list_lengths(lists: ValuesView) -> int:
@@ -67,27 +71,39 @@ def sum_list_lengths(lists: ValuesView) -> int:
 
 
 def message_from_anonymous_admin(message: Message) -> bool:
-    return message.from_user is not None and message.from_user.is_bot and message.sender_chat is not None and message.sender_chat.type in (Chat.GROUP, Chat.SUPERGROUP)
+    return all([
+        message.from_user is not None,
+        message.from_user.is_bot,
+        message.sender_chat is not None,
+        message.sender_chat.type in (Chat.GROUP, Chat.SUPERGROUP)
+    ])
 
 
 def is_post_from_channel(user_id: Optional[int]) -> bool:
     return user_id == telegram.constants.SERVICE_CHAT_ID if user_id is not None else False
 
 
-def get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
+def strip_nonalpha_chars(text: str) -> str:
+    text_lower = text.lower()
+    return ''.join(character for character in text_lower if character in string.ascii_lowercase)
+
+
+def flatten_repost_lists_except_original(reposts: List[List[int]]) -> List[int]:
+    return functools.reduce(lambda flattened, next_list: [*flattened, *next_list[1:]],
+                            reposts,
+                            [])
+
+
+def _get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
     effective_message = update.channel_post if update.channel_post is not None else update.effective_message
-    sender_id = effective_message.sender_chat.id if effective_message.sender_chat is not None else effective_message.from_user.id
-    sender_name = effective_message.sender_chat.title if effective_message.sender_chat is not None else effective_message.from_user.first_name
+    effective_chat = effective_message.sender_chat
+    sender_id = effective_chat.id if effective_chat is not None else effective_message.from_user.id
+    sender_name = effective_chat.title if effective_chat is not None else effective_message.from_user.first_name
     group_id = effective_message.chat_id
     return RepostBotTelegramParams(group_id, sender_id, sender_name, effective_message)
 
 
-def strip_nonalpha_chars(text: str) -> str:
-    text_lower = text.lower()
-    return ''.join(character for character in text_lower if character in _ALPHA_CHARS)
-
-
-def get_repost_params(func: Callable):
+def get_repost_params(func: Callable) -> Callable:
     def _wrapped(repostbot_instance, update: Update, context: CallbackContext, *args, **kwargs) -> Any:
-        return func(repostbot_instance, update, context, get_params_from_telegram_update(update), *args, **kwargs)
+        return func(repostbot_instance, update, context, _get_params_from_telegram_update(update), *args, **kwargs)
     return _wrapped

@@ -6,7 +6,7 @@ from typing import List, Dict, Type
 from telegram import ChatAction, Chat
 from telegram.ext import CallbackContext
 
-from util.utils import is_post_from_channel, RepostBotTelegramParams
+from utils import is_post_from_channel, RepostBotTelegramParams
 
 logger = logging.getLogger("Strategies")
 
@@ -41,7 +41,7 @@ class RepostCalloutStrategy(ABC):
         pass
 
 
-class _CallOutAllIndividualRepostsStrategy(RepostCalloutStrategy):
+class _VerboseCalloutStyleStrategy(RepostCalloutStrategy):
 
     def __init__(self, strings: Dict[str, str or List[str]]):
         super().__init__(strings)
@@ -54,7 +54,7 @@ class _CallOutAllIndividualRepostsStrategy(RepostCalloutStrategy):
                 context: CallbackContext,
                 hash_to_message_id_dict: Dict[str, List[int]],
                 params: RepostBotTelegramParams):
-        super().callout(context, hash_to_message_id_dict)
+        super().callout(context, hash_to_message_id_dict, params)
         message = params.effective_message
         cid = params.group_id
         bot = context.bot
@@ -65,19 +65,22 @@ class _CallOutAllIndividualRepostsStrategy(RepostCalloutStrategy):
             prev_msg = ""
             for i, repost_msg in enumerate(message_ids[:-1]):
                 bot.send_chat_action(cid, ChatAction.TYPING)
-                msg = self._get_random_intermediary_message(prev_msg)
-                if i == 0:
-                    msg = self.strings["first_repost_callout"]
+                msg = self._get_message(i, prev_msg)
                 prev_msg = msg
-                bot.send_message(cid, _format_response_with_name(msg, name), reply_to_message_id=repost_msg)
+                message.reply_text(_format_response_with_name(msg, name))
             bot.send_chat_action(cid, ChatAction.TYPING)
             message.reply_text(_format_response_with_name(self.strings["final_repost_callout"], name))
 
-    def _get_random_intermediary_message(self, prev_msg: str):
+    def _get_message(self, message_num: int, prev_msg: str) -> str:
+        if message_num == 0:
+            return self.strings["first_repost_callout"]
+        return self._get_random_intermediary_message(prev_msg)
+
+    def _get_random_intermediary_message(self, prev_msg: str) -> str:
         return random.choice([response for response in self.strings["intermediary_callouts"] if response != prev_msg])
 
 
-class _CallOutNumberOfRepostsStrategy(RepostCalloutStrategy):
+class _SingularCalloutStyleStrategy(RepostCalloutStrategy):
 
     def __init__(self, strings: Dict[str, str or List[str]]):
         super().__init__(strings)
@@ -99,16 +102,24 @@ class _CallOutNumberOfRepostsStrategy(RepostCalloutStrategy):
         params.effective_message.reply_text(response_with_num_and_name, quote=True)
 
 
-STRATEGIES: Dict[str, Type[RepostCalloutStrategy]] = {
-    "verbose": _CallOutAllIndividualRepostsStrategy,
-    "singular": _CallOutNumberOfRepostsStrategy,
+_STRATEGIES: Dict[str, Type[RepostCalloutStrategy]] = {
+    "verbose": _VerboseCalloutStyleStrategy,
+    "singular": _SingularCalloutStyleStrategy,
 }
 DEFAULT_STRATEGY = "singular"
 
 
-def get_strategy(strategy: str) -> Type[RepostCalloutStrategy]:
+def get_default_strategy() -> Type[RepostCalloutStrategy]:
+    return _STRATEGIES[DEFAULT_STRATEGY]
+
+
+def get_callout_strategy(strategy: str) -> Type[RepostCalloutStrategy]:
     try:
-        return STRATEGIES[strategy.lower().strip()]
+        return _STRATEGIES[strategy.lower().strip()]
     except KeyError:
         logger.error(f"Cannot find strategy for {strategy}, using default {DEFAULT_STRATEGY}")
-        return STRATEGIES[DEFAULT_STRATEGY]
+        return _STRATEGIES[DEFAULT_STRATEGY]
+
+
+def get_all_callout_strategies() -> List[Type[RepostCalloutStrategy]]:
+    return list(_STRATEGIES.values())

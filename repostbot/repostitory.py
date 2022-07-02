@@ -3,17 +3,17 @@ import logging
 import os
 from dataclasses import dataclass
 from timeit import default_timer as timer
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, Any
 
+import ujson as json
 from PIL import Image
 from imagehash import average_hash
 from telegram import Message
 from telegram import MessageEntity
-import ujson as json
 
-from repostbot.toggles import Toggles
+from repostbot.toggles import Toggles, ToggleType
 from repostbot.whitelist_status import WhitelistAddStatus
-from util.utils import RepostBotTelegramParams
+from utils.__init__ import RepostBotTelegramParams
 
 logger = logging.getLogger("Repostitory")
 
@@ -28,7 +28,7 @@ class Repostitory:
     def __init__(self,
                  hash_size: int,
                  data_path: str,
-                 default_toggles: Dict[str, bool]):
+                 default_toggles: Dict[ToggleType, bool]):
         self.data_path = data_path
         self.default_toggles = default_toggles
         self.hash_size = hash_size
@@ -63,7 +63,7 @@ class Repostitory:
             data = json.load(f)
         return data
 
-    def process_whitelist_command_on_message(self, message: Message, group_id: int) -> WhitelistAddStatus:
+    def process_whitelist_command(self, message: Message, group_id: int) -> WhitelistAddStatus:
         group_data = self.get_group_data(group_id)
         whitelisted_hashes: List[str] = group_data.get("whitelist", list())
         hashes = self.get_message_entity_hashes(message, self.get_toggles_data(group_id))
@@ -95,7 +95,7 @@ class Repostitory:
     def save_toggles_data(self, group_id: int, toggles: Toggles):
         group_data = self.get_group_data(group_id)
         current_toggles = group_data.get("toggles", self.default_toggles)
-        new_toggles = {**current_toggles, **toggles.as_json()}
+        new_toggles = {**current_toggles, **toggles.as_dict()}
         group_data.update({"toggles": new_toggles})
         self.save_group_data(group_id, group_data)
 
@@ -121,7 +121,15 @@ class Repostitory:
                 url_keys.append(url_hash)
         return MessageEntityHashes(picture_key, url_keys)
 
-    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: List[str]) -> Dict[str, List[int]]:
+    def get_deleted_messages(self, group_id) -> List[int]:
+        return self.get_group_data(group_id).get("deleted")
+
+    def updated_deleted_messages(self, group_id: int, newly_deleted_messages: List[int]) -> None:
+        group_data = self.get_group_data(group_id)
+        group_data.get("deleted", []).extend(newly_deleted_messages)
+        self.save_group_data(group_id, group_data)
+
+    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: List[str]) -> Dict[str, Any]:
         group_data = self.get_group_data(group_id)
         group_reposts = group_data.get("reposts")
         for entity_hash in hashes:
@@ -153,7 +161,8 @@ class Repostitory:
 
     def _get_empty_group_file_structure(self) -> dict:
         return {
-            "toggles": self.default_toggles,
             "reposts": {},
-            "whitelist": []
+            "toggles": self.default_toggles,
+            "whitelist": [],
+            "deleted": [],
         }

@@ -1,11 +1,11 @@
 import logging
 import os
-from typing import List
+from typing import List, Optional
 
 import yaml
 from dotenv import dotenv_values
 
-from repostbot.strategies import STRATEGIES, DEFAULT_STRATEGY
+from repostbot.strategies import get_all_callout_strategies, get_default_strategy
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +25,11 @@ def _ensure_proper_config_structure(data: dict):
         "bot_token",
         "hash_size",
         "repost_callout_timeout",
-        "auto_call_out",
         "callout_style",
         "default_toggles",
         "strings"
     ]
-    defaults = ["url", "picture"]
+    toggles = ["url", "picture", "auto_callout", "auto_delete"]
     strings = [
         "private_chat",
         "private_chat_toggle",
@@ -50,20 +49,23 @@ def _ensure_proper_config_structure(data: dict):
         "group_repost_data_reset",
         "stats_command_reply",
     ]
-    for repost_strategy in STRATEGIES.values():
+    for repost_strategy in get_all_callout_strategies():
         strings.extend(repost_strategy.get_required_strings())
 
     logger.info("TESTING TOP-LEVEL FIELDS")
-    _test_strings(data, top_level)
+    _check_config_fields(data, top_level, "top level fields")
 
-    logger.info("TESTING DEFAULT CALLOUT SETTINGS")
-    _test_strings(data.get("default_toggles"), defaults)
+    logger.info("TESTING DEFAULT TOGGLED SETTINGS")
+    _check_config_fields(data.get("default_toggles"), toggles, "default toggles")
 
     logger.info("TESTING BOT STRINGS")
-    _test_strings(data.get("strings"), strings)
+    _check_config_fields(data.get("strings"), strings, "strings")
 
 
-def _test_strings(data: dict, strings: List[str]):
+def _check_config_fields(data: Optional[dict], strings: List[str], field_type: str):
+    if data is None:
+        logger.warning(f"Data is missing for {field_type}")
+        return
     for field in strings:
         value_exists = data.get(field) is not None
         logger_fn = logger.info if value_exists else logger.warning
@@ -93,8 +95,7 @@ def get_config_variables(config_path: str) -> tuple:
     default_telegram_token = None
     default_bot_strings = dict()
     default_bot_admin_id = None
-    default_strategy = DEFAULT_STRATEGY
-    default_auto_call_out = None
+    default_strategy = None
     default_repost_callout_timeout = None
     default_hash_size = None
     default_repost_data_path = None
@@ -106,8 +107,7 @@ def get_config_variables(config_path: str) -> tuple:
         default_telegram_token = default_config_data.get("bot_token", None)
         default_bot_strings = default_config_data.get("strings", {})
         default_bot_admin_id = default_config_data.get("bot_admin_id", None)
-        default_strategy = default_config_data.get("callout_style", DEFAULT_STRATEGY)
-        default_auto_call_out = default_config_data.get("auto_call_out", None)
+        default_strategy = default_config_data.get("callout_style", get_default_strategy())
         default_repost_callout_timeout = default_config_data.get("repost_callout_timeout", None)
         default_hash_size = default_config_data.get("hash_size", None)
         default_repost_data_path = default_config_data.get("repost_data_path", None)
@@ -117,7 +117,6 @@ def get_config_variables(config_path: str) -> tuple:
     bot_strings = default_bot_strings
     bot_admin_id = default_bot_admin_id
     strategy = default_strategy
-    auto_call_out = default_auto_call_out
     repost_callout_timeout = default_repost_callout_timeout
     hash_size = default_hash_size
     repost_data_path = default_repost_data_path
@@ -130,7 +129,6 @@ def get_config_variables(config_path: str) -> tuple:
         bot_strings = {**default_bot_strings, **config_data.get("strings", {})}
         bot_admin_id = config_data.get("bot_admin_id", default_bot_admin_id)
         strategy = config_data.get("callout_style", default_strategy)
-        auto_call_out = config_data.get("auto_call_out", default_auto_call_out)
         repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
         hash_size = config_data.get("hash_size", default_hash_size)
         repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
@@ -139,7 +137,6 @@ def get_config_variables(config_path: str) -> tuple:
     bot_variables = (
         bot_strings,
         strategy,
-        auto_call_out,
         repost_callout_timeout,
         hash_size,
         repost_data_path,
@@ -151,15 +148,16 @@ def get_config_variables(config_path: str) -> tuple:
     if any(var is None for var in [telegram_token, bot_admin_id]):
         logger.warning("Missing Telegram token and bot admin ID; if using environment variables, this is fine.")
 
-    return telegram_token, \
-           bot_strings, \
-           bot_admin_id, \
-           strategy, \
-           auto_call_out, \
-           repost_callout_timeout, \
-           hash_size, \
-           repost_data_path, \
-           default_toggles
+    return (
+        telegram_token,
+        bot_strings,
+        bot_admin_id,
+        strategy,
+        repost_callout_timeout,
+        hash_size,
+        repost_data_path,
+        default_toggles
+    )
 
 
 def get_environment_variables():

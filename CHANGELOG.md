@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Auto-delete reposts, toggleable with `/toggle autodelete`
+- Auto call out reposts, toggleable with `/toggle autocallout`
+- Remove more strings from code and put into config file
+- Made script to migrate group data files from <0.4.0 to 0.5.0 format
+
 ### Changed
 
 - Use ujson library to try and help with performance
-
-### Removed
-
-- Removed auto callout functionality temporarily
+- Revert interaction of URL and picture tracking settings and repost processing
+  - When toggled off, messages containing those entities will not be acknowledged at all
 
 ### Fixed
 
@@ -23,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Update Pillow to 9.0.1
+- Update Pillow to 9.2.0
 
 ## [0.4.0] - 2021-11-20
 
