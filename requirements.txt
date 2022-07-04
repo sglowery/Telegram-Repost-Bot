@@ -4,4 +4,4 @@ Pillow==9.2.0
 PyYAML==6.0
 python-telegram-bot==13.13
 python-dotenv==0.20.0
-ujson==5.3.0
+ujson==5.4.0
