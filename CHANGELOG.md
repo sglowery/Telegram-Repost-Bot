@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auto-delete reposts, toggleable with `/toggle autodelete`
 - Auto call out reposts, toggleable with `/toggle autocallout`
 - Remove more strings from code and put into config file
-- Made script to migrate group data files from <0.4.0 to 0.5.0 format
+- Made script to migrate group data files from <=0.4.0 to 0.5.0 format
 
 ### Changed
 
