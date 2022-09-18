@@ -3,7 +3,7 @@ import logging
 import string
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Callable, ValuesView, Optional, Any, List
+from typing import Callable, ValuesView, Any
 
 import telegram.constants
 from telegram import Update, Message, Chat
@@ -11,7 +11,7 @@ from telegram.ext import CallbackContext
 
 logger = logging.getLogger("Flood Protection")
 
-_flood_track: Dict[int, Dict[str, datetime]] = dict()
+_flood_track: dict[int, dict[str, datetime]] = dict()
 
 
 @dataclass(frozen=True)
@@ -79,8 +79,8 @@ def message_from_anonymous_admin(message: Message) -> bool:
     ])
 
 
-def is_post_from_channel(user_id: Optional[int]) -> bool:
-    return user_id == telegram.constants.SERVICE_CHAT_ID if user_id is not None else False
+def is_post_from_channel(user_id: int | None) -> bool:
+    return user_id == telegram.constants.SERVICE_CHAT_ID
 
 
 def strip_nonalpha_chars(text: str) -> str:
@@ -88,7 +88,7 @@ def strip_nonalpha_chars(text: str) -> str:
     return ''.join(character for character in text_lower if character in string.ascii_lowercase)
 
 
-def flatten_repost_lists_except_original(reposts: List[List[int]]) -> List[int]:
+def flatten_repost_lists_except_original(reposts: list[list[int]]) -> list[int]:
     return functools.reduce(lambda flattened, next_list: [*flattened, *next_list[1:]],
                             reposts,
                             [])
@@ -106,4 +106,5 @@ def _get_params_from_telegram_update(update: Update) -> RepostBotTelegramParams:
 def get_repost_params(func: Callable) -> Callable:
     def _wrapped(repostbot_instance, update: Update, context: CallbackContext, *args, **kwargs) -> Any:
         return func(repostbot_instance, update, context, _get_params_from_telegram_update(update), *args, **kwargs)
+
     return _wrapped
