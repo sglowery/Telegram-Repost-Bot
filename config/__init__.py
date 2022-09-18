@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional
+from typing import Any
 
 import yaml
 from dotenv import dotenv_values
@@ -18,7 +18,7 @@ class NoConfigFileAvailableException(Exception):
     pass
 
 
-def _ensure_proper_config_structure(data: dict):
+def _ensure_proper_config_structure(data: dict[str, Any]):
     top_level = [
         "repost_data_path",
         "bot_admin_id",
@@ -62,7 +62,7 @@ def _ensure_proper_config_structure(data: dict):
     _check_config_fields(data.get("strings"), strings, "strings")
 
 
-def _check_config_fields(data: Optional[dict], strings: List[str], field_type: str):
+def _check_config_fields(data: dict[str, Any], strings: list[str], field_type: str):
     if data is None:
         logger.warning(f"Data is missing for {field_type}")
         return

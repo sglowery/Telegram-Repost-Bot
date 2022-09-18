@@ -20,8 +20,8 @@ def main():
     parser.add_argument('-e', '--environment', help='use environment variables to set API keys', action='store_true', dest='use_env')
     parser.set_defaults(use_env=False)
     args = parser.parse_args()
-    config_path = args.config
-    use_env = args.use_env
+    config_path: str = args.config
+    use_env: bool = args.use_env
 
     (
         telegram_token,

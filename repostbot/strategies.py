@@ -1,7 +1,7 @@
 import logging
 import random
 from abc import ABC, abstractmethod
-from typing import List, Dict, Type
+from typing import Type
 
 from telegram import ChatAction, Chat
 from telegram.ext import CallbackContext
@@ -25,34 +25,34 @@ def _get_name_to_use(params: RepostBotTelegramParams) -> str:
 
 
 class RepostCalloutStrategy(ABC):
-    def __init__(self, strings: Dict[str, str or List[str]]):
+    def __init__(self, strings: dict[str, str | list[str]]):
         self.strings = strings
 
     @abstractmethod
     def callout(self,
                 context: CallbackContext,
-                hash_to_message_id_dict: Dict[str, List[int]],
+                hash_to_message_id_dict: dict[str, list[int]],
                 params: RepostBotTelegramParams) -> None:
         logger.info("Calling out repost")
 
     @staticmethod
     @abstractmethod
-    def get_required_strings() -> List[str]:
+    def get_required_strings() -> list[str]:
         pass
 
 
 class _VerboseCalloutStyleStrategy(RepostCalloutStrategy):
 
-    def __init__(self, strings: Dict[str, str or List[str]]):
+    def __init__(self, strings: dict[str, str | list[str]]):
         super().__init__(strings)
 
     @staticmethod
-    def get_required_strings() -> List[str]:
+    def get_required_strings() -> list[str]:
         return ["repost_alert", "first_repost_callout", "final_repost_callout", "intermediary_callouts"]
 
     def callout(self,
                 context: CallbackContext,
-                hash_to_message_id_dict: Dict[str, List[int]],
+                hash_to_message_id_dict: dict[str, list[int]],
                 params: RepostBotTelegramParams):
         super().callout(context, hash_to_message_id_dict, params)
         message = params.effective_message
@@ -82,16 +82,16 @@ class _VerboseCalloutStyleStrategy(RepostCalloutStrategy):
 
 class _SingularCalloutStyleStrategy(RepostCalloutStrategy):
 
-    def __init__(self, strings: Dict[str, str or List[str]]):
+    def __init__(self, strings: dict[str, str | list[str]]):
         super().__init__(strings)
 
     @staticmethod
-    def get_required_strings() -> List[str]:
+    def get_required_strings() -> list[str]:
         return ["single_callout_one_repost_options", "single_callout_x_num_reposts_options"]
 
     def callout(self,
                 context: CallbackContext,
-                hash_to_message_id_dict: Dict[str, List[int]],
+                hash_to_message_id_dict: dict[str, list[int]],
                 params: RepostBotTelegramParams):
         super().callout(context, hash_to_message_id_dict, params)
         context.bot.send_chat_action(params.group_id, ChatAction.TYPING)
@@ -102,7 +102,7 @@ class _SingularCalloutStyleStrategy(RepostCalloutStrategy):
         params.effective_message.reply_text(response_with_num_and_name, quote=True)
 
 
-_STRATEGIES: Dict[str, Type[RepostCalloutStrategy]] = {
+_STRATEGIES: dict[str, Type[RepostCalloutStrategy]] = {
     "verbose": _VerboseCalloutStyleStrategy,
     "singular": _SingularCalloutStyleStrategy,
 }
@@ -121,5 +121,5 @@ def get_callout_strategy(strategy: str) -> Type[RepostCalloutStrategy]:
         return _STRATEGIES[DEFAULT_STRATEGY]
 
 
-def get_all_callout_strategies() -> List[Type[RepostCalloutStrategy]]:
+def get_all_callout_strategies() -> list[Type[RepostCalloutStrategy]]:
     return list(_STRATEGIES.values())

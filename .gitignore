@@ -4,6 +4,7 @@ __pycache__/
 .idea/
 tests/
 /venv/
+/venv310/
 
 config/config.yaml
 .env

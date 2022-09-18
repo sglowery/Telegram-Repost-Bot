@@ -1,6 +1,5 @@
 import logging
-from typing import Dict, Type
-from typing import List
+from typing import Type
 
 from telegram import Chat, Bot
 from telegram import KeyboardButton
@@ -36,7 +35,7 @@ class RepostBot:
 
     def __init__(self,
                  token: str,
-                 strings: Dict[str, str],
+                 strings: dict[str, str],
                  admin_id: int,
                  repost_callout_strategy: Type[RepostCalloutStrategy],
                  flood_protection_seconds: int,
@@ -98,10 +97,10 @@ class RepostBot:
                           update: Update,
                           context: CallbackContext,
                           params: RepostBotTelegramParams,
-                          hash_to_message_id_dict: Dict[str, List[int]]) -> None:
+                          hash_to_message_id_dict: dict[str, list[int]]) -> None:
         self.repost_callout_strategy.callout(context, hash_to_message_id_dict, params)
 
-    def _delete_reposts(self, group_id: int, hashes_with_reposts: Dict[str, List[int]], bot: Bot) -> None:
+    def _delete_reposts(self, group_id: int, hashes_with_reposts: dict[str, list[int]], bot: Bot) -> None:
         deleted_messages = self.repostitory.get_deleted_messages(group_id)
         flattened_messages = flatten_repost_lists_except_original(list(hashes_with_reposts.values()))
         newly_deleted_messages = []
@@ -225,7 +224,7 @@ class RepostBot:
                        update: Update,
                        context: CallbackContext,
                        params: RepostBotTelegramParams) -> None:
-        group_reposts: Dict[str, List[int]] = self.repostitory.get_group_data(params.group_id).get('reposts')
+        group_reposts: dict[str, list[int]] = self.repostitory.get_group_data(params.group_id).get('reposts')
         url_reposts = dict()
         image_reposts = dict()
         for key, repost_list in group_reposts.items():
