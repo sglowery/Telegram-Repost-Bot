@@ -10,6 +10,7 @@ from imagehash import average_hash
 from telegram import Message
 from telegram import MessageEntity
 
+from repostbot.group_data import GroupData
 from repostbot.toggles import Toggles, ToggleType
 from repostbot.whitelist_status import WhitelistAddStatus
 from utils import RepostBotTelegramParams
@@ -48,23 +49,23 @@ class Repostitory:
         if toggles.track_urls:
             hashes.extend(url_keys)
         group_data = self._update_repost_data_for_group(chat_id, message_id, hashes)
-        reposts = group_data.get("reposts", {})
-        whitelist = group_data.get("whitelist", [])
+        reposts = group_data.reposts
+        whitelist = group_data.whitelist
         return {entity_hash: reposts.get(entity_hash, []) for entity_hash in hashes if entity_hash not in whitelist}
 
-    def save_group_data(self, chat_id: int, new_group_data: dict) -> None:
+    def save_group_data(self, chat_id: int, new_group_data: GroupData) -> None:
         with open(self._get_path_for_group_data(chat_id), 'w') as f:
-            json.dump(new_group_data, f, indent=2)
+            json.dump(new_group_data.to_dict(), f, indent=2)
 
-    def get_group_data(self, group_id: int) -> dict:
+    def get_group_data(self, group_id: int) -> GroupData:
         self._ensure_group_file(group_id)
         with open(self._get_path_for_group_data(group_id)) as f:
             data = json.load(f)
-        return data
+        return GroupData(data)
 
     def process_whitelist_command(self, message: Message, group_id: int) -> WhitelistAddStatus:
         group_data = self.get_group_data(group_id)
-        whitelisted_hashes: list[str] = group_data.get("whitelist", list())
+        whitelisted_hashes: set[str] = group_data.whitelist
         hashes = self.get_message_entity_hashes(message, self.get_toggles_data(group_id))
         picture_key = hashes.picture_key
         url_keys = hashes.url_keys
@@ -76,8 +77,8 @@ class Repostitory:
                     whitelisted_hashes.remove(key)
                     key_removed = True
                 else:
-                    whitelisted_hashes.append(key)
-            group_data["whitelist"] = whitelisted_hashes
+                    whitelisted_hashes.add(key)
+            group_data.whitelist = whitelisted_hashes
             self.save_group_data(group_id, group_data)
             if key_removed:
                 return WhitelistAddStatus.ALREADY_EXISTS
@@ -88,14 +89,13 @@ class Repostitory:
         self.save_group_data(group_id, self._get_empty_group_file_structure())
 
     def get_toggles_data(self, group_id: int) -> Toggles:
-        toggles_dict = self.get_group_data(group_id).get("toggles", self.default_toggles)
-        return Toggles(toggles_dict)
+        return self.get_group_data(group_id).toggles
 
     def save_toggles_data(self, group_id: int, toggles: Toggles):
         group_data = self.get_group_data(group_id)
-        current_toggles = group_data.get("toggles", self.default_toggles)
-        new_toggles = {**current_toggles, **toggles.as_dict()}
-        group_data.update({"toggles": new_toggles})
+        current_toggles = group_data.toggles
+        new_toggles = {**current_toggles.as_dict(), **toggles.as_dict()}
+        group_data.toggles = new_toggles
         self.save_group_data(group_id, group_data)
 
     def get_message_entity_hashes(self, message: Message, toggles: Toggles) -> MessageEntityHashes:
@@ -120,17 +120,19 @@ class Repostitory:
                 url_keys.append(url_hash)
         return MessageEntityHashes(picture_key, url_keys)
 
-    def get_deleted_messages(self, group_id) -> list[int]:
-        return self.get_group_data(group_id).get("deleted")
+    def get_deleted_messages(self, group_id) -> set[int]:
+        return self.get_group_data(group_id).deleted
 
-    def updated_deleted_messages(self, group_id: int, newly_deleted_messages: list[int]) -> None:
+    def updated_deleted_messages(self, group_id: int, newly_deleted_messages: set[int]) -> None:
         group_data = self.get_group_data(group_id)
-        group_data.get("deleted", []).extend(newly_deleted_messages)
+        deleted = group_data.deleted
+        deleted.update(newly_deleted_messages)
+        group_data.deleted = deleted
         self.save_group_data(group_id, group_data)
 
-    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: list[str]) -> dict[str, Any]:
+    def _update_repost_data_for_group(self, group_id: int, message_id: int, hashes: list[str]) -> GroupData:
         group_data = self.get_group_data(group_id)
-        group_reposts = group_data.get("reposts")
+        group_reposts = group_data.reposts
         for entity_hash in hashes:
             list_of_message_ids = group_reposts.get(entity_hash, None)
             if list_of_message_ids is None or len(list_of_message_ids) == 0:
@@ -158,10 +160,5 @@ class Repostitory:
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
 
-    def _get_empty_group_file_structure(self) -> dict:
-        return {
-            "reposts": {},
-            "toggles": self.default_toggles,
-            "whitelist": [],
-            "deleted": [],
-        }
+    def _get_empty_group_file_structure(self) -> GroupData:
+        return GroupData.blank(self.default_toggles)

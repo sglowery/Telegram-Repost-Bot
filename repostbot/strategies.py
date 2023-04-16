@@ -14,7 +14,7 @@ def _format_response_with_name(response: str, name: str, **kwargs) -> str:
     return response.format(name=name, **kwargs)
 
 
-def _get_name_to_use(params: RepostBotTelegramParams) -> str:
+def _get_name_from_params(params: RepostBotTelegramParams) -> str:
     user_id = params.sender_id
     forward_from_chat = params.effective_message.forward_from_chat if params.effective_message is not None else None
     if is_post_from_channel(user_id) or (forward_from_chat is not None and forward_from_chat.type == Chat.CHANNEL):
@@ -57,7 +57,7 @@ class _VerboseCalloutStyleStrategy(RepostCalloutStrategy):
         message = params.effective_message
         cid = params.group_id
         bot = context.bot
-        name = _get_name_to_use(params)
+        name = _get_name_from_params(params)
         for message_ids in hash_to_message_id_dict.values():
             bot.send_chat_action(cid, ChatAction.TYPING)
             message.reply_text(self.strings["repost_alert"])
@@ -95,7 +95,7 @@ class _SingularCalloutStyleStrategy(RepostCalloutStrategy):
         super().callout(context, hash_to_message_id_dict, params)
         context.bot.send_chat_action(params.group_id, ChatAction.TYPING)
         num_reposts = sum(len(message_ids) - 1 for message_ids in hash_to_message_id_dict.values())
-        name = _get_name_to_use(params)
+        name = _get_name_from_params(params)
         key = "single_callout_one_repost_options" if num_reposts == 1 else "single_callout_x_num_reposts_options"
         response_with_num_and_name = _format_response_with_name(random.choice(self.strings[key]), name, num=num_reposts)
         params.effective_message.reply_text(response_with_num_and_name, quote=True)
@@ -117,7 +117,7 @@ def get_callout_strategy(strategy: str) -> type[RepostCalloutStrategy]:
         return _STRATEGIES[strategy.lower().strip()]
     except KeyError:
         logger.error(f"Cannot find strategy for {strategy}, using default {DEFAULT_STRATEGY}")
-        return _STRATEGIES[DEFAULT_STRATEGY]
+    return _STRATEGIES[DEFAULT_STRATEGY]
 
 
 def get_all_callout_strategies() -> list[type[RepostCalloutStrategy]]:

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- No longer possible to have duplicate values in whitelist or deleted lists in group data
 - Update dependencies
   - ImageHash to 4.3.0
   - python-telegram-bot to 13.14

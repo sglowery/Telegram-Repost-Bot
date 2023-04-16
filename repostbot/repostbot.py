@@ -84,8 +84,8 @@ class RepostBot:
             for entity_hash, message_ids in hash_to_message_ids_map.items()
             if len(message_ids) > 1
         }
-        toggles = self.repostitory.get_toggles_data(params.group_id)
         if any(len(messages) > 0 for messages in hashes_with_reposts.values()):
+            toggles = self.repostitory.get_toggles_data(params.group_id)
             if toggles.auto_callout:
                 self._call_out_reposts(update, context, params, hashes_with_reposts)
             if toggles.auto_delete:
@@ -102,14 +102,14 @@ class RepostBot:
     def _delete_reposts(self, group_id: int, hashes_with_reposts: dict[str, list[int]], bot: Bot) -> None:
         deleted_messages = self.repostitory.get_deleted_messages(group_id)
         flattened_messages = flatten_repost_lists_except_original(list(hashes_with_reposts.values()))
-        newly_deleted_messages = []
-        for message_id in filter(lambda msg_id: msg_id not in deleted_messages, flattened_messages):
+        newly_deleted_messages = set()
+        for message_id in (msg_id for msg_id in flattened_messages if msg_id not in deleted_messages):
             try:
                 bot.delete_message(group_id, message_id)
             except (Unauthorized, BadRequest) as e:
                 logger.error(e.message)
             else:
-                newly_deleted_messages.append(message_id)
+                newly_deleted_messages.add(message_id)
         self.repostitory.updated_deleted_messages(group_id, newly_deleted_messages)
 
     @flood_protection("toggle")
@@ -121,30 +121,29 @@ class RepostBot:
         message = params.effective_message
         if message.chat.type == Chat.PRIVATE:
             message.reply_text(self.strings["private_chat_toggle"])
-        else:
-            group_id = message.chat.id
-            responses = list()
-            toggle_data = self.repostitory.get_toggles_data(group_id)
-            for toggle_type, arg in Toggles.get_toggle_args():
-                if arg in context.args:
-                    toggle_data[toggle_type] = not toggle_data[toggle_type]
-                    toggle_name = Toggles.get_toggle_display_name(toggle_type, self.strings)
-                    display_value = self.strings["enabled"] if toggle_data[toggle_type] else self.strings["disabled"]
-                    responses.append(f"{toggle_name}: {display_value}")
-            self.repostitory.save_toggles_data(group_id, toggle_data)
-            message.reply_text("\n".join(responses))
+            return
+        group_id = message.chat.id
+        responses = list()
+        toggle_data = self.repostitory.get_toggles_data(group_id)
+        for toggle_type, arg in Toggles.get_toggle_args():
+            if arg in context.args:
+                toggle_data[toggle_type] = not toggle_data[toggle_type]
+                toggle_name = Toggles.get_toggle_display_name(toggle_type, self.strings)
+                display_value = self.strings["enabled"] if toggle_data[toggle_type] else self.strings["disabled"]
+                responses.append(f"{toggle_name}: {display_value}")
+        self.repostitory.save_toggles_data(group_id, toggle_data)
+        message.reply_text("\n".join(responses))
 
     @flood_protection("reset")
     @get_repost_params
     def _reset_prompt_from_command(self,
                                    update: Update,
                                    context: CallbackContext,
-                                   params: RepostBotTelegramParams) -> ConversationState:
+                                   params: RepostBotTelegramParams) -> int:
         user_id = params.sender_id
         message = params.effective_message
         chat = message.chat
-        if (
-                user_id == self.admin_id
+        if (user_id == self.admin_id
                 or user_id in (chat_member.user.id for chat_member in chat.get_administrators())
                 or message_from_anonymous_admin(message)
         ):
@@ -164,7 +163,7 @@ class RepostBot:
     def _handle_reset_confirmation(self,
                                    update: Update,
                                    context: CallbackContext,
-                                   params: RepostBotTelegramParams) -> ConversationState:
+                                   params: RepostBotTelegramParams) -> int:
         response = strip_nonalpha_chars(str(params.effective_message.text))
         bot_response = self.strings["group_repost_reset_cancel"]
         if response in self.strings["group_reset_confirmation_responses"]:
@@ -190,7 +189,7 @@ class RepostBot:
                                  params: RepostBotTelegramParams) -> None:
         group_toggles = self.repostitory.get_toggles_data(params.group_id)
         responses = [self.strings['settings_command_response']]
-        for toggle_type, arg in group_toggles.get_toggle_args():
+        for toggle_type, _ in group_toggles.get_toggle_args():
             display_name = Toggles.get_toggle_display_name(toggle_type, self.strings)
             display_value = self.strings['enabled'] if group_toggles[toggle_type] else self.strings['disabled']
             responses.append(
@@ -208,14 +207,14 @@ class RepostBot:
         reply_message = message.reply_to_message
         if reply_message is None:
             message.reply_text(self.strings["invalid_whitelist_reply"], quote=True)
-        else:
-            whitelist_command_result = self.repostitory.process_whitelist_command(reply_message, params.group_id)
-            response = self.strings["successful_whitelist_reply"]
-            if whitelist_command_result == WhitelistAddStatus.ALREADY_EXISTS:
-                response = self.strings["removed_from_whitelist"]
-            elif whitelist_command_result == WhitelistAddStatus.FAIL:
-                response = self.strings["invalid_whitelist_reply"]
-            message.reply_text(response, quote=True)
+            return
+        whitelist_command_result = self.repostitory.process_whitelist_command(reply_message, params.group_id)
+        response = self.strings["successful_whitelist_reply"]
+        if whitelist_command_result == WhitelistAddStatus.ALREADY_EXISTS:
+            response = self.strings["removed_from_whitelist"]
+        elif whitelist_command_result == WhitelistAddStatus.FAIL:
+            response = self.strings["invalid_whitelist_reply"]
+        message.reply_text(response, quote=True)
 
     @flood_protection("stats")
     @get_repost_params
@@ -223,7 +222,7 @@ class RepostBot:
                        update: Update,
                        context: CallbackContext,
                        params: RepostBotTelegramParams) -> None:
-        group_reposts: dict[str, list[int]] = self.repostitory.get_group_data(params.group_id).get('reposts')
+        group_reposts: dict[str, list[int]] = self.repostitory.get_group_data(params.group_id).reposts
         url_reposts = dict()
         image_reposts = dict()
         for key, repost_list in group_reposts.items():
