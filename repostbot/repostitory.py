@@ -3,7 +3,6 @@ import logging
 import os
 from dataclasses import dataclass
 from timeit import default_timer as timer
-from typing import Any
 
 import ujson as json
 from PIL import Image

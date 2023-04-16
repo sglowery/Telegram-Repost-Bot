@@ -1,5 +1,4 @@
 import logging
-from typing import Type
 
 from telegram import Chat, Bot
 from telegram import KeyboardButton
@@ -37,7 +36,7 @@ class RepostBot:
                  token: str,
                  strings: dict[str, str],
                  admin_id: int,
-                 repost_callout_strategy: Type[RepostCalloutStrategy],
+                 repost_callout_strategy: type[RepostCalloutStrategy],
                  flood_protection_seconds: int,
                  repostitory: Repostitory):
         self.token = token

@@ -1,7 +1,6 @@
 import logging
 import random
 from abc import ABC, abstractmethod
-from typing import Type
 
 from telegram import ChatAction, Chat
 from telegram.ext import CallbackContext
@@ -102,18 +101,18 @@ class _SingularCalloutStyleStrategy(RepostCalloutStrategy):
         params.effective_message.reply_text(response_with_num_and_name, quote=True)
 
 
-_STRATEGIES: dict[str, Type[RepostCalloutStrategy]] = {
+_STRATEGIES: dict[str, type[RepostCalloutStrategy]] = {
     "verbose": _VerboseCalloutStyleStrategy,
     "singular": _SingularCalloutStyleStrategy,
 }
 DEFAULT_STRATEGY = "singular"
 
 
-def get_default_strategy() -> Type[RepostCalloutStrategy]:
+def get_default_strategy() -> type[RepostCalloutStrategy]:
     return _STRATEGIES[DEFAULT_STRATEGY]
 
 
-def get_callout_strategy(strategy: str) -> Type[RepostCalloutStrategy]:
+def get_callout_strategy(strategy: str) -> type[RepostCalloutStrategy]:
     try:
         return _STRATEGIES[strategy.lower().strip()]
     except KeyError:
@@ -121,5 +120,5 @@ def get_callout_strategy(strategy: str) -> Type[RepostCalloutStrategy]:
         return _STRATEGIES[DEFAULT_STRATEGY]
 
 
-def get_all_callout_strategies() -> list[Type[RepostCalloutStrategy]]:
+def get_all_callout_strategies() -> list[type[RepostCalloutStrategy]]:
     return list(_STRATEGIES.values())
