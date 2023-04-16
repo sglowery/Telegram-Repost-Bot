@@ -151,7 +151,7 @@ class Repostitory:
         except FileNotFoundError:
             logger.info("Group has no file; making one")
             with open(self._get_path_for_group_data(group_id), 'w') as f:
-                json.dump(self._get_empty_group_file_structure(), f, indent=2)
+                json.dump(self._get_empty_group_file_structure().to_dict(), f, indent=2)
 
     def _get_path_for_group_data(self, group_id: int | str) -> str:
         return f"{self.data_path}/{group_id}.json"
