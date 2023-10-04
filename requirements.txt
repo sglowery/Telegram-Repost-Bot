@@ -1,6 +1,6 @@
 ImageHash==4.2.1
 telegram==0.0.1
-Pillow==9.2.0
+Pillow==10.0.1
 PyYAML==6.0
 python-telegram-bot==13.13
 python-dotenv==0.20.0
