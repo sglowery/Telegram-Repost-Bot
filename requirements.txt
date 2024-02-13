@@ -1,7 +1,7 @@
 ImageHash==4.3.1
 telegram==0.0.1
-Pillow==9.5.0
-PyYAML==6.0
-python-telegram-bot==13.15
+Pillow==10.1.0
+PyYAML==6.0.1
+python-telegram-bot[job-queue]==20.8
 python-dotenv==1.0.0
-ujson==5.7.0
+ujson==5.9.0

@@ -34,12 +34,12 @@ class Repostitory:
         self.hash_size = hash_size
         self._check_directory()
 
-    def process_message_entities(self, params: RepostBotTelegramParams) -> dict[str, list[int]]:
+    async def process_message_entities(self, params: RepostBotTelegramParams) -> dict[str, list[int]]:
         chat_id = params.group_id
         self._ensure_group_file(chat_id)
         toggles = self.get_toggles_data(chat_id)
         message = params.effective_message
-        hash_result = self.get_message_entity_hashes(message, toggles)
+        hash_result = await self.get_message_entity_hashes(message, toggles)
         picture_key = hash_result.picture_key
         url_keys = hash_result.url_keys
         message_id = message.message_id
@@ -63,10 +63,10 @@ class Repostitory:
             data = json.load(f)
         return GroupData(data)
 
-    def process_whitelist_command(self, message: Message, group_id: int) -> WhitelistAddStatus:
+    async def process_whitelist_command(self, message: Message, group_id: int) -> WhitelistAddStatus:
         group_data = self.get_group_data(group_id)
         whitelisted_hashes: set[str] = group_data.whitelist
-        hashes = self.get_message_entity_hashes(message, self.get_toggles_data(group_id))
+        hashes = await self.get_message_entity_hashes(message, self.get_toggles_data(group_id))
         picture_key = hashes.picture_key
         url_keys = hashes.url_keys
         keys_in_message = [picture_key, *url_keys] if picture_key is not None else url_keys
@@ -98,7 +98,7 @@ class Repostitory:
         group_data.toggles = new_toggles
         self.save_group_data(group_id, group_data)
 
-    def get_message_entity_hashes(self, message: Message, toggles: Toggles) -> MessageEntityHashes:
+    async def get_message_entity_hashes(self, message: Message, toggles: Toggles) -> MessageEntityHashes:
         picture_key = None
         url_keys = list()
         url_entities = message.parse_entities(types=[MessageEntity.URL])
@@ -107,7 +107,8 @@ class Repostitory:
             path = f"{photo.file_id}.jpg"
             start_time = timer()
             logger.info("Getting file...")
-            message.bot.get_file(photo).download(path)
+            file = await message.get_bot().get_file(photo)
+            await file.download_to_drive(path)
             with Image.open(path) as f:
                 picture_key = str(average_hash(f, hash_size=self.hash_size))
             end_time = timer()

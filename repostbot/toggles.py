@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum, unique
-from typing import Iterable
+from typing import ItemsView
 
 
 @unique
@@ -51,14 +51,18 @@ class Toggles:
     def as_dict(self) -> dict[str, bool]:
         return {member.value: self[member] for _, member in ToggleType.__members__.items()}
 
-    def __getitem__(self, item: ToggleType) -> bool:
-        return self._toggles_dict[item.value]
+    def __getitem__(self, item: ToggleType | str) -> bool:
+        match item:
+            case str():
+                return self._toggles_dict[item]
+            case ToggleType():
+                return self._toggles_dict[item.value]
 
     def __setitem__(self, key: ToggleType, value: bool) -> None:
         self._toggles_dict[key.value] = value
 
     @staticmethod
-    def get_toggle_args() -> Iterable[str, str]:
+    def get_toggle_args() -> ItemsView[str, str]:
         return {member: member.value for _, member in ToggleType.__members__.items()}.items()
 
     @staticmethod
