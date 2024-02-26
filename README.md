@@ -19,6 +19,8 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 - Run Repost Bot with the command `python main.py -c CONFIG_FILE_PATH`
   - If you want to use environment variables to set the Telegram API token and the admin ID, run the above command with `-e` as well. This will be handy if you want to run this on a service like Heroku.
     - Set the Telegram token and, optionally, your user id in the `.env.example` file and save a new file with `.example` removed.
+- Initialize the database with `python repostbot/db/init_db.py`. Confirm that `rebostdb.sqlite` was created and resides in the same folder as `main.py`. 
+  - If you're upgrading to v0.6.0, check the migration guide to get your existing data into the database.
 - Add the bot to your group and enjoy your oasis of original content!
 
 # If you don't want to run your own:

@@ -5,10 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.1] - Unreleased
+## [0.6.0] - Unreleased
+
+### Added
+
+- Script to migrate group reposts, whitelists and deleted messages to database
+  - This script also removes those sections from the json files to save disk space
+- New string response for calling /whitelist command on message that contains multiple entities which have mixed whitelist status
 
 ### Changed
 
+- Use database for repost tracking, whitelist and deleted messages
+- Default group settings folder changed to `/group_settings`
+- Downloading images is concurrent
 - No longer possible to have duplicate values in whitelist or deleted lists in group data
 - Update dependencies
   - ImageHash to 4.3.1
@@ -16,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - python-dotenv to 1.0.1
   - Pillow to 10.2.0
   - ujson to 5.9.0
+
+### Fixed
+
+- URLs in image captions are now tracked
 
 ## [0.5.0] - 2022-07-04
 

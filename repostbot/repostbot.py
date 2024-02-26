@@ -29,6 +29,13 @@ CHECK_FOR_REPOST_FILTERS = NON_PRIVATE_GROUP_FILTER & \
                            ~(filters.FORWARDED & ~filters.SenderChat.CHANNEL)
 
 
+URL_KEY_LENGTH = 64
+
+
+async def _userid_reply(update: Update, context: CallbackContext) -> None:
+    await update.effective_message.reply_text(str(update.effective_user.id))
+
+
 class RepostBot:
 
     def __init__(self,
@@ -36,17 +43,17 @@ class RepostBot:
                  strings: dict[str, str],
                  admin_id: int,
                  repost_callout_strategy: type[RepostCalloutStrategy],
-                 flood_protection_seconds: int,
+                 flood_protection_timeout: int,
                  repostitory: Repostitory):
         self.token = token
         self.admin_id = admin_id
         self.strings = strings
         self.repostitory = repostitory
         self.repost_callout_strategy = repost_callout_strategy(self.strings)
-        self.flood_protection_seconds = flood_protection_seconds
+        self.flood_protection_timeout = flood_protection_timeout
 
         self.application: Application = Application.builder().token(token).build()
-        self.application.add_handler(MessageHandler(CHECK_FOR_REPOST_FILTERS, self._check_potential_repost))
+        self.application.add_handler(MessageHandler(CHECK_FOR_REPOST_FILTERS, self._check_potential_repost, block=False))
         self.application.add_handler(CommandHandler("toggle", self._set_toggles, filters=NON_PRIVATE_GROUP_FILTER))
 
         self.application.add_handler(ConversationHandler(
@@ -64,7 +71,7 @@ class RepostBot:
         self.application.add_handler(CommandHandler("settings", self._display_toggle_settings, filters=NON_PRIVATE_GROUP_FILTER))
         self.application.add_handler(CommandHandler("whitelist", self._whitelist_command, filters=NON_PRIVATE_GROUP_FILTER))
         self.application.add_handler(CommandHandler("stats", self._stats_command, filters=NON_PRIVATE_GROUP_FILTER))
-        self.application.add_handler(CommandHandler("userid", self._userid_reply, filters=~NON_PRIVATE_GROUP_FILTER))
+        self.application.add_handler(CommandHandler("userid", _userid_reply, filters=~NON_PRIVATE_GROUP_FILTER))
 
     def run(self) -> None:
         logger.info("Bot is running")
@@ -74,7 +81,7 @@ class RepostBot:
     async def _check_potential_repost(self,
                                       update: Update,
                                       context: CallbackContext,
-                                      params: RepostBotTelegramParams) -> None:
+                                      params: RepostBotTelegramParams = None):
         hash_to_message_ids_map = await self.repostitory.process_message_entities(params)
         hashes_with_reposts = {
             entity_hash: message_ids
@@ -98,9 +105,9 @@ class RepostBot:
 
     async def _delete_reposts(self, group_id: int, hashes_with_reposts: dict[str, list[int]], bot: Bot) -> None:
         deleted_messages: set[int] = self.repostitory.get_deleted_messages(group_id)
-        flattened_messages: list[int] = flatten_repost_lists_except_original(list(hashes_with_reposts.values()))
+        flattened_messages: set[int] = set(flatten_repost_lists_except_original(list(hashes_with_reposts.values())))
         newly_deleted_messages = set()
-        for message_id in (msg_id for msg_id in flattened_messages if msg_id not in deleted_messages):
+        for message_id in flattened_messages.difference(deleted_messages):
             try:
                 await bot.delete_message(group_id, message_id)
             except (Forbidden, BadRequest) as e:
@@ -114,7 +121,7 @@ class RepostBot:
     async def _set_toggles(self,
                            update: Update,
                            context: CallbackContext,
-                           params: RepostBotTelegramParams) -> None:
+                           params: RepostBotTelegramParams = None) -> None:
         message = params.effective_message
         if message.chat.type == Chat.PRIVATE:
             await message.reply_text(self.strings["private_chat_toggle"])
@@ -136,7 +143,7 @@ class RepostBot:
     async def _reset_prompt_from_command(self,
                                          update: Update,
                                          context: CallbackContext,
-                                         params: RepostBotTelegramParams) -> int:
+                                         params: RepostBotTelegramParams = None) -> int:
         user_id = params.sender_id
         message = params.effective_message
         chat = message.chat
@@ -160,7 +167,7 @@ class RepostBot:
     async def _handle_reset_confirmation(self,
                                          update: Update,
                                          context: CallbackContext,
-                                         params: RepostBotTelegramParams) -> int:
+                                         params: RepostBotTelegramParams = None) -> int:
         response = strip_nonalpha_chars(str(params.effective_message.text))
         bot_response = self.strings["group_repost_reset_cancel"]
         if response in self.strings["group_reset_confirmation_responses"]:
@@ -174,8 +181,7 @@ class RepostBot:
     async def _repost_bot_help(self,
                                update: Update,
                                context: CallbackContext,
-                               params: RepostBotTelegramParams) -> None:
-        print(context.update_queue.qsize())
+                               params: RepostBotTelegramParams = None) -> None:
         bot_name = context.bot.first_name
         await params.effective_message.reply_text(self.strings["help_command"].format(name=bot_name), quote=True)
 
@@ -184,7 +190,7 @@ class RepostBot:
     async def _display_toggle_settings(self,
                                        update: Update,
                                        context: CallbackContext,
-                                       params: RepostBotTelegramParams) -> None:
+                                       params: RepostBotTelegramParams = None) -> None:
         group_toggles = self.repostitory.get_toggles_data(params.group_id)
         responses = [self.strings['settings_command_response']]
         for toggle_type, _ in group_toggles.get_toggle_args():
@@ -200,18 +206,23 @@ class RepostBot:
     async def _whitelist_command(self,
                                  update: Update,
                                  context: CallbackContext,
-                                 params: RepostBotTelegramParams) -> None:
+                                 params: RepostBotTelegramParams = None) -> None:
         message = params.effective_message
         reply_message = message.reply_to_message
         if reply_message is None:
             await message.reply_text(self.strings["invalid_whitelist_reply"], quote=True)
             return
-        whitelist_command_result = self.repostitory.process_whitelist_command(reply_message, params.group_id)
-        response = self.strings["successful_whitelist_reply"]
-        if whitelist_command_result == WhitelistAddStatus.ALREADY_EXISTS:
-            response = self.strings["removed_from_whitelist"]
-        elif whitelist_command_result == WhitelistAddStatus.FAIL:
-            response = self.strings["invalid_whitelist_reply"]
+
+        match await self.repostitory.process_whitelist_command(reply_message, params.group_id):
+            case WhitelistAddStatus.SUCCESS:
+                response = self.strings["successful_whitelist_reply"]
+            case WhitelistAddStatus.ALREADY_EXISTS:
+                response = self.strings["removed_from_whitelist_reply"]
+            case WhitelistAddStatus.ADDED_AND_REMOVED:
+                response = self.strings["added_and_removed_from_whitelist_reply"]
+            case _:
+                response = self.strings["invalid_whitelist_reply"]
+
         await message.reply_text(response, quote=True)
 
     @get_repost_params
@@ -219,13 +230,13 @@ class RepostBot:
     async def _stats_command(self,
                              update: Update,
                              context: CallbackContext,
-                             params: RepostBotTelegramParams) -> None:
-        group_reposts: dict[str, list[int]] = self.repostitory.get_group_data(params.group_id).reposts
+                             params: RepostBotTelegramParams = None) -> None:
+        group_reposts: dict[str, list[int]] = self.repostitory.get_group_reposts(params.group_id)
         url_reposts = dict()
         image_reposts = dict()
         for key, repost_list in group_reposts.items():
             only_reposts = repost_list[1:]
-            (url_reposts if len(key) == 64 else image_reposts).update({key: only_reposts})
+            (url_reposts if len(key) == URL_KEY_LENGTH else image_reposts).update({key: only_reposts})
         num_unique_images = len(image_reposts.keys())
         num_image_reposts = sum_list_lengths(image_reposts.values())
         num_unique_urls = len(url_reposts.keys())
@@ -235,6 +246,3 @@ class RepostBot:
                                                               num_unique_urls=num_unique_urls,
                                                               num_url_reposts=num_url_reposts)
         await params.effective_message.reply_text(response, quote=True)
-
-    async def _userid_reply(self, update: Update, context: CallbackContext) -> None:
-        await update.effective_message.reply_text(str(update.effective_user.id))

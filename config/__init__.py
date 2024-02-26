@@ -24,7 +24,7 @@ def _ensure_proper_config_structure(data: dict[str, Any]):
         "bot_admin_id",
         "bot_token",
         "hash_size",
-        "repost_callout_timeout",
+        "flood_protection_timeout",
         "callout_style",
         "default_toggles",
         "strings"
@@ -96,7 +96,7 @@ def get_config_variables(config_path: str) -> tuple:
     default_bot_strings = dict()
     default_bot_admin_id = None
     default_strategy = None
-    default_repost_callout_timeout = None
+    default_flood_protection_timeout = None
     default_hash_size = None
     default_repost_data_path = None
     default_default_toggles = None
@@ -108,7 +108,7 @@ def get_config_variables(config_path: str) -> tuple:
         default_bot_strings = default_config_data.get("strings", {})
         default_bot_admin_id = default_config_data.get("bot_admin_id", None)
         default_strategy = default_config_data.get("callout_style", get_default_strategy())
-        default_repost_callout_timeout = default_config_data.get("repost_callout_timeout", None)
+        default_flood_protection_timeout = default_config_data.get("flood_protection_timeout", None)
         default_hash_size = default_config_data.get("hash_size", None)
         default_repost_data_path = default_config_data.get("repost_data_path", None)
         default_default_toggles = default_config_data.get("default_toggles", None)
@@ -117,7 +117,7 @@ def get_config_variables(config_path: str) -> tuple:
     bot_strings = default_bot_strings
     bot_admin_id = default_bot_admin_id
     strategy = default_strategy
-    repost_callout_timeout = default_repost_callout_timeout
+    flood_protection_timeout = default_flood_protection_timeout
     hash_size = default_hash_size
     repost_data_path = default_repost_data_path
     default_toggles = default_default_toggles
@@ -129,7 +129,7 @@ def get_config_variables(config_path: str) -> tuple:
         bot_strings = {**default_bot_strings, **config_data.get("strings", {})}
         bot_admin_id = config_data.get("bot_admin_id", default_bot_admin_id)
         strategy = config_data.get("callout_style", default_strategy)
-        repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
+        flood_protection_timeout = config_data.get("flood_protection_timeout", default_flood_protection_timeout)
         hash_size = config_data.get("hash_size", default_hash_size)
         repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
         default_toggles = config_data.get("default_toggles", default_default_toggles)
@@ -137,7 +137,7 @@ def get_config_variables(config_path: str) -> tuple:
     bot_variables = (
         bot_strings,
         strategy,
-        repost_callout_timeout,
+        flood_protection_timeout,
         hash_size,
         repost_data_path,
         default_toggles
@@ -153,7 +153,7 @@ def get_config_variables(config_path: str) -> tuple:
         bot_strings,
         bot_admin_id,
         strategy,
-        repost_callout_timeout,
+        flood_protection_timeout,
         hash_size,
         repost_data_path,
         default_toggles

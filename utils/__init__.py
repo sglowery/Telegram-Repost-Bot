@@ -39,7 +39,7 @@ def flood_protection(command_key: str):
             effective_user_id = effective_user.id
             async with _lock:
                 _init_tracking_for_user(effective_user_id)
-                threshold = repostbot_instance.flood_protection_seconds
+                threshold = repostbot_instance.flood_protection_timeout
                 last_called = _flood_track.get(effective_user_id).get(command_key)
                 if last_called is None or (datetime.now() - last_called).total_seconds() > threshold:
                     _clean_up_tracking(threshold)
@@ -108,7 +108,7 @@ def get_repost_params(func):
         return await func(repostbot_instance,
                           update,
                           context,
-                          _get_params_from_telegram_update(update),
+                          params=_get_params_from_telegram_update(update),
                           *args,
                           **kwargs)
 

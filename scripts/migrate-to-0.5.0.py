@@ -46,7 +46,6 @@ if __name__ == '__main__':
     elif not any(file[-5:] == '.json' for file in files):
         raise RuntimeError("Directory doesn't have any .json files")
     print(f"Using group data in {path}")
-    errors = 0
     files_done = 0
     files_migrated = 0
     error_files = 0

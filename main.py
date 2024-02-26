@@ -28,7 +28,7 @@ def main():
         bot_strings,
         bot_admin_id,
         strategy,
-        repost_callout_timeout,
+        flood_protection_timeout,
         hash_size,
         repost_data_path,
         default_toggles,
@@ -43,7 +43,7 @@ def main():
         bot_strings,
         bot_admin_id,
         get_callout_strategy(strategy),
-        repost_callout_timeout,
+        flood_protection_timeout,
         repostitory
     )
     rpb.run()
