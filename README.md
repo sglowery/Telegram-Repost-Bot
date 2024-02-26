@@ -9,7 +9,7 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 
 - Create a bot by talking to [@BotFather](https://telegram.me/botfather) on Telegram.
 - Use BotFather to turn off privacy mode -- this is required since RepostBot needs to check messages as they come in.
-- Ensure you have at least Python 3.8 installed on your computer.
+- Ensure you have at least Python 3.12 installed on your computer.
 - Clone the repo from GitHub and install the dependencies:\
   `git clone https://github.com/sglowery/Telegram-Repost-Bot.git <FOLDER_NAME>`\
   `cd <FOLDER_NAME>`\
