@@ -60,6 +60,7 @@ def _init_tracking_for_user(user_id: int) -> None:
 
 def _clean_up_tracking(threshold: int):
     now = datetime.now()
+    num_users = len(_flood_track.keys())
     updated_flood_track = {
         user_id: {
             command_key: last_command_called
@@ -70,6 +71,9 @@ def _clean_up_tracking(threshold: int):
     }
     _flood_track.clear()
     _flood_track.update(updated_flood_track)
+    users_remaining = len(updated_flood_track.keys())
+    users_removed = num_users - users_remaining
+    logger.info(f"Cleaned tracking. Users remaining: {users_remaining}. Users removed: {users_removed}")
 
 
 def sum_list_lengths(lists: ValuesView) -> int:
