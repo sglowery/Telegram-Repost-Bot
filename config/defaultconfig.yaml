@@ -3,28 +3,32 @@
 # changes that will need to be merged. If you're comfortable with this, that's fine, but ideally you should copy this
 # and put your own data in that one. If you're missing data in your user-created config, Repost Bot will fall back on
 # this file.
+
 repost_data_path: "group_settings/"  # the folder where all group repost data will be stored.
-                                     #
+
 bot_admin_id: 123                    # your personal user id, used to override group admin settings to reset group repost data.
                                      # use the /userid command in a private chat with the bot to echo your telegram user id.
-                                     #
+
 bot_token: "your token here"         # get this from BotFather.
-                                     #
+
 hash_size: 22                        # lower numbers = smaller file sizes, but less precise hashes and more false positives.
                                      # try not to go below 20; higher than 24 may result in false negatives.
-                                     #
+
 flood_protection_timeout: 2          # time in seconds that must pass before repost bot will make another callout in a group.
                                      # (this also affects how often the bot will respond to each person in each group)
-                                     #
+
 callout_style: "singular"            # "verbose" or "singular". determines if bot calls out each repost individually or
                                      # addresses it with a single response. warning: "verbose" can be very spammy, but it
                                      # is pretty funny.
-                                     #
+
 default_toggles:                     # repost bot can be configured by default to track URLs and pictures.
   url: true                          # users can use the /toggle command to change these at any time.
-  picture: true                      #
+  picture: true
   autocallout: true                  # toggles whether Repost Bot automatically calls out reposts.
   autodelete: false                  # toggles whether Repost Bot automatically deletes reposts.
+
+group_whitelist: []                  # use these to allow or disallow specific groups from using the bot.
+group_blacklist: []                  # these cannot both have values. only one or none of these should be used.
 
 # these are the strings used for the bot's various responses, and also for its repost callout strategies.
 # if you create a new strategy, the strings for its responses need to be in here and the keys to refer to it
@@ -106,3 +110,9 @@ strings:
   single_callout_x_num_reposts_options: [
       "{name}, you know this has been posted {num} times before, right? Crazy."
   ]
+
+  # what the bot should say when blacklisted groups attempt to use it
+  blacklisted_response: "This group has been banned from using this bot."
+
+  # what the bot should say when non-whitelisted groups attempt to use it
+  not_in_whitelist_response: "This group is not allowed to use this bot."

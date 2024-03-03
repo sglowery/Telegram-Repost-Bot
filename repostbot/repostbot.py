@@ -28,7 +28,6 @@ CHECK_FOR_REPOST_FILTERS = NON_PRIVATE_GROUP_FILTER & \
                            (filters.PHOTO | filters.Entity("url")) & \
                            ~(filters.FORWARDED & ~filters.SenderChat.CHANNEL)
 
-
 URL_KEY_LENGTH = 64
 
 
@@ -44,34 +43,66 @@ class RepostBot:
                  admin_id: int,
                  repost_callout_strategy: type[RepostCalloutStrategy],
                  flood_protection_timeout: int,
-                 repostitory: Repostitory):
+                 repostitory: Repostitory,
+                 group_whitelist: list[int],
+                 group_blacklist: list[int]):
         self.token = token
         self.admin_id = admin_id
         self.strings = strings
         self.repostitory = repostitory
         self.repost_callout_strategy = repost_callout_strategy(self.strings)
         self.flood_protection_timeout = flood_protection_timeout
+        self.group_whitelist = group_whitelist
+        self.group_blacklist = group_blacklist
+
+        self.config_group_filter = (filters.Chat(chat_id=group_whitelist, allow_empty=True) &
+                                    ~filters.Chat(chat_id=group_blacklist))
+
+        self.default_group_filter = self.config_group_filter & NON_PRIVATE_GROUP_FILTER
 
         self.application: Application = Application.builder().token(token).build()
-        self.application.add_handler(MessageHandler(CHECK_FOR_REPOST_FILTERS, self._check_potential_repost, block=False))
-        self.application.add_handler(CommandHandler("toggle", self._set_toggles, filters=NON_PRIVATE_GROUP_FILTER))
 
-        self.application.add_handler(ConversationHandler(
-            entry_points=[CommandHandler("reset", self._reset_prompt_from_command, filters=NON_PRIVATE_GROUP_FILTER)],
-            states={
-                ConversationState.RESET_CONFIRMATION_STATE: [
-                    MessageHandler(filters.TEXT, self._handle_reset_confirmation)
-                ]
-            },
-            fallbacks=[],
-            conversation_timeout=60
-        ))
+        self.application.add_handlers([
+            MessageHandler(callback=self._check_potential_repost,
+                           filters=self.config_group_filter & CHECK_FOR_REPOST_FILTERS,
+                           block=False),
 
-        self.application.add_handler(CommandHandler("help", self._repost_bot_help, block=False))
-        self.application.add_handler(CommandHandler("settings", self._display_toggle_settings, filters=NON_PRIVATE_GROUP_FILTER))
-        self.application.add_handler(CommandHandler("whitelist", self._whitelist_command, filters=NON_PRIVATE_GROUP_FILTER))
-        self.application.add_handler(CommandHandler("stats", self._stats_command, filters=NON_PRIVATE_GROUP_FILTER))
-        self.application.add_handler(CommandHandler("userid", _userid_reply, filters=~NON_PRIVATE_GROUP_FILTER))
+            CommandHandler(command="toggle",
+                           callback=self._set_toggles,
+                           filters=self.default_group_filter),
+
+            ConversationHandler(entry_points=[CommandHandler(command="reset",
+                                                             callback=self._reset_prompt_from_command,
+                                                             filters=self.default_group_filter)],
+                                states={
+                                    ConversationState.RESET_CONFIRMATION_STATE: [
+                                        MessageHandler(filters=self.config_group_filter & filters.TEXT,
+                                                       callback=self._handle_reset_confirmation)
+                                    ]
+                                },
+                                fallbacks=[],
+                                conversation_timeout=60),
+
+            CommandHandler(command="help",
+                           callback=self._repost_bot_help,
+                           block=False),
+
+            CommandHandler(command="settings",
+                           callback=self._display_toggle_settings,
+                           filters=self.default_group_filter),
+
+            CommandHandler(command="whitelist",
+                           callback=self._whitelist_command,
+                           filters=self.default_group_filter),
+
+            CommandHandler(command="stats",
+                           callback=self._stats_command,
+                           filters=self.default_group_filter),
+
+            CommandHandler(command="userid",
+                           callback=_userid_reply,
+                           filters=self.config_group_filter & ~NON_PRIVATE_GROUP_FILTER),
+        ])
 
     def run(self) -> None:
         logger.info("Bot is running")
@@ -183,7 +214,18 @@ class RepostBot:
                                context: CallbackContext,
                                params: RepostBotTelegramParams = None) -> None:
         bot_name = context.bot.first_name
-        await params.effective_message.reply_text(self.strings["help_command"].format(name=bot_name), quote=True)
+        group_id = params.group_id
+        group_filter_response = None
+        if (len(self.group_whitelist) > 0) and group_id not in self.group_whitelist:
+            group_filter_response = self.strings["not_in_whitelist_response"]
+        elif group_id in self.group_blacklist:
+            group_filter_response = self.strings["blacklisted_response"]
+
+        if group_filter_response:
+            await params.effective_message.reply_text(group_filter_response)
+        else:
+            await params.effective_message.reply_text(self.strings["help_command"].format(name=bot_name), quote=True)
+
 
     @get_repost_params
     @flood_protection("settings")

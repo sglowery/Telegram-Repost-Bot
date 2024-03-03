@@ -32,6 +32,8 @@ def main():
         hash_size,
         repost_data_path,
         default_toggles,
+        group_whitelist,
+        group_blacklist,
     ) = get_config_variables(config_path)
 
     if use_env:
@@ -44,7 +46,9 @@ def main():
         bot_admin_id,
         get_callout_strategy(strategy),
         flood_protection_timeout,
-        repostitory
+        repostitory,
+        group_whitelist,
+        group_blacklist,
     )
     rpb.run()
 
