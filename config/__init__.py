@@ -29,16 +29,21 @@ def _ensure_proper_config_structure(data: dict[str, Any]):
         "default_toggles",
         "strings"
     ]
-    toggles = ["url", "picture", "auto_callout", "auto_delete"]
+    toggles = ["url", "picture", "autocallout", "autodelete"]
     strings = [
         "private_chat",
         "private_chat_toggle",
         "help_command",
         "settings_command_response",
-        "true",
-        "false",
+        "enabled",
+        "disabled",
+        "settings_track_pictures",
+        "settings_track_urls",
+        "settings_auto_callout",
+        "settings_auto_delete",
         "invalid_whitelist_reply",
-        "removed_from_whitelist",
+        "removed_from_whitelist_reply",
+        "added_and_removed_from_whitelist_reply",
         "successful_whitelist_reply",
         "group_repost_reset_initial_prompt",
         "group_reset_yes",
