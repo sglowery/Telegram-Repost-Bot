@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - URLs in image captions are now tracked
 - Fixed outdated start-up config field and string checks
+- Fixed outdated /help response text
 
 ## [0.5.0] - 2022-07-04
 
