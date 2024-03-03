@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Script to migrate group reposts, whitelists and deleted messages to database
   - This script also removes those sections from the json files to save disk space
 - New string response for calling /whitelist command on message that contains multiple entities which have mixed whitelist status
+- Whitelist and blacklist functionality, and a /help command response to tell users if their group is banned from or not allowed to be used with the bot
 
 ### Changed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default group settings folder changed to `/group_settings`
 - Downloading images is concurrent
 - No longer possible to have duplicate values in whitelist or deleted lists in group data
+- Updated /help response to include new data stored
 - Update dependencies
   - ImageHash to 4.3.1
   - python-telegram-bot to 20.8
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - URLs in image captions are now tracked
+- Fixed outdated start-up config field and string checks
 
 ## [0.5.0] - 2022-07-04
 
