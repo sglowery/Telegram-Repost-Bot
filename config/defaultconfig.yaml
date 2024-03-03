@@ -34,7 +34,7 @@ strings:
   private_chat_toggle: "I don't track reposts in private chats."
 
   help_command: "I'm {name}. I analyze the pictures and URLs you send and call out reposts.\n
-   I store the message id, and hashed versions of the URLs and pictures you send. GIFs and videos are not tracked.\n\n
+   I store the message ID, hashed versions of the URLs and pictures you send, the user ID of the sender and the ID of the group it was sent in. GIFs and videos are not tracked.\n\n
    /toggle [url | picture | autocallout | autodelete] - Toggle various settings for Repost Bot. Untoggling tracking of URLs and pictures means they will not be logged or acknowledged.\n
    /settings - Display Repost Bot settings for this group.\n
    /whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.\n
