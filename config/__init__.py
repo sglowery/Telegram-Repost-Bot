@@ -90,7 +90,7 @@ def get_config_variables(config_path: str) -> tuple:
 
     if config_path is not None:
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config_data = yaml.safe_load(f)
         except (FileNotFoundError, TypeError) as e:
             logger.warning(f"{e.strerror} -- could not find '{config_path}'")

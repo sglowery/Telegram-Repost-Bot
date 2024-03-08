@@ -226,7 +226,6 @@ class RepostBot:
         else:
             await params.effective_message.reply_text(self.strings["help_command"].format(name=bot_name), quote=True)
 
-
     @get_repost_params
     @flood_protection("settings")
     async def _display_toggle_settings(self,

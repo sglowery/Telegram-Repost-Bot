@@ -62,7 +62,7 @@ class Toggles:
         self._toggles_dict[key.value] = value
 
     @staticmethod
-    def get_toggle_args() -> ItemsView[str, str]:
+    def get_toggle_args() -> ItemsView[ToggleType, str]:
         return {member: member.value for _, member in ToggleType.__members__.items()}.items()
 
     @staticmethod
