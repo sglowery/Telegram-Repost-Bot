@@ -7,5 +7,7 @@ tests/
 /venv310/
 
 config/config.yaml
+config.yaml
+repostdb.sqlite
 .env
 TODO.txt
