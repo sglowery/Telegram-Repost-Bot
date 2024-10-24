@@ -77,20 +77,15 @@ def _migrate_group_data_to_db():
             to_migrate_reposts.extend([
                 (group_id, message_id, hash_value)
                 for hash_value, message_ids in reposts.items()
-                for message_id in message_ids
+                for message_id in set(message_ids)
             ])
+
             to_migrate_whitelisted.extend(
-                (group_id, whitelist_hash) for whitelist_hash in ([] if whitelist is None else whitelist))
+                (group_id, whitelist_hash) for whitelist_hash in ([] if whitelist is None else whitelist)
+            )
+
             to_migrate_deleted.extend((group_id, message_id) for message_id in ([] if deleted is None else deleted))
 
-            if reposts is not None:
-                del group_data['reposts']
-            if whitelist is not None:
-                del group_data['whitelist']
-            if deleted is not None:
-                del group_data['deleted']
-            with open(file_path, 'w') as f:
-                json.dump(group_data, f)
             files_migrated += 1
             files_done += 1
 
@@ -115,18 +110,54 @@ def _migrate_group_data_to_db():
             ((*repost_params, now) for repost_params in to_migrate_reposts)
         )
         print('done!')
+
         print('inserting whitelist...', end='')
         cursor.executemany(
             'insert into hash_whitelist(group_id, hash_value) values (?, ?)',
             to_migrate_whitelisted
         )
         print('done!')
+
         print('inserting deleted...', end='')
         cursor.executemany(
             'insert into deleted_messages(group_id, message_id) values (?, ?)',
             to_migrate_deleted
         )
-    print('done migrating to the database.')
+        print('done!')
+
+    print('finished migrating to the database.')
+    print('culling group data files...')
+    _cull_files(path, files)
+    print('done!')
+
+
+def _cull_files(path: str, files: list[str]):
+    for file in files:
+        file_path = os.path.join(path, file)
+        try:
+            with open(file_path) as f:
+                group_data: dict[str, Any] = json.load(f)
+        except Exception as e:
+            print(f"exception when culling {file}")
+            continue
+        reposts: dict[str, list[int]] | None = group_data.get('reposts')
+        whitelist: list[str] | None = group_data.get('whitelist')
+        deleted: list[int] | None = group_data.get('deleted')
+
+        if (reposts is None) and (whitelist is None) and (deleted is None):
+            print(f"{file} is already culled")
+            continue
+
+        if reposts is not None:
+            del group_data['reposts']
+        if whitelist is not None:
+            del group_data['whitelist']
+        if deleted is not None:
+            del group_data['deleted']
+        with open(file_path, 'w') as f:
+            json.dump(group_data, f)
+        print(f"{file} was successfully culled")
+
 
 
 if __name__ == "__main__":

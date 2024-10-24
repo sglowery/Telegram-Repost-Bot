@@ -1,5 +1,25 @@
 # Migration Guide
 
+## \>=0.5.0 to 0.6.0
+
+### What changed?
+
+- Storing repost, whitelist and deleted message data in a database and only group settings in JSON.
+
+Open a terminal at the project root. Use your venv's python.exe:
+
+`venv/scripts/python.exe repostbot/db/init_db.py`
+
+This will create the database. Then, migrate your group data to the database and the new JSON format:
+
+(This step is destructive! Your data will be deleted from the JSON files. Back it up if you are worried about losing it.)
+
+`venv/scripts/python.exe scripts/migrate-to-db.py`
+
+This will try to find your group data, add it to the database, and then cull the unneeded data from the JSON files.
+
+You should be able to run RepostBot normally at this point
+
 ## <=0.4.x to 0.5.0
 
 ### What changed?
