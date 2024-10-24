@@ -37,15 +37,18 @@ async def _userid_reply(update: Update, context: CallbackContext) -> None:
 
 class RepostBot:
 
-    def __init__(self,
-                 token: str,
-                 strings: dict[str, str],
-                 admin_id: int,
-                 repost_callout_strategy: type[RepostCalloutStrategy],
-                 flood_protection_timeout: int,
-                 repostitory: Repostitory,
-                 group_whitelist: list[int],
-                 group_blacklist: list[int]):
+    def __init__(
+            self,
+            token: str,
+            strings: dict[str, str],
+            admin_id: int,
+            repost_callout_strategy: type[RepostCalloutStrategy],
+            flood_protection_timeout: int,
+            repostitory: Repostitory,
+            group_whitelist: list[int],
+            group_blacklist: list[int],
+            drop_pending_updates: bool,
+    ):
         self.token = token
         self.admin_id = admin_id
         self.strings = strings
@@ -54,6 +57,7 @@ class RepostBot:
         self.flood_protection_timeout = flood_protection_timeout
         self.group_whitelist = group_whitelist
         self.group_blacklist = group_blacklist
+        self.drop_pending_updates = drop_pending_updates
 
         self.config_group_filter = (filters.Chat(chat_id=group_whitelist, allow_empty=True) &
                                     ~filters.Chat(chat_id=group_blacklist))
@@ -106,7 +110,7 @@ class RepostBot:
 
     def run(self) -> None:
         logger.info("Bot is running")
-        self.application.run_polling()
+        self.application.run_polling(drop_pending_updates=self.drop_pending_updates)
 
     @get_repost_params
     async def _check_potential_repost(self,

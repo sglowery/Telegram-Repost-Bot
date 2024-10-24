@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - This script also removes those sections from the json files to save disk space
 - New string response for calling /whitelist command on message that contains multiple entities which have mixed whitelist status
 - Whitelist and blacklist functionality, and a /help command response to tell users if their group is banned from or not allowed to be used with the bot
+- Use -d or --drop-pending-updates argument to drop any updates pending before it's started up
 
 ### Changed
 

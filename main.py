@@ -18,10 +18,12 @@ def main():
     parser = argparse.ArgumentParser(description='Run an instance of Repost Bot over Telegram')
     parser.add_argument('-c', '--config', type=str, help='set path of config file relative to this file')
     parser.add_argument('-e', '--environment', help='use environment variables to set API keys', action='store_true', dest='use_env')
+    parser.add_argument('-d', '--drop-pending-updates', help='drop unprocessed updates before starting bot', action='store_true', dest='drop_pending_updates')
     parser.set_defaults(use_env=False)
     args = parser.parse_args()
     config_path: str = args.config
     use_env: bool = args.use_env
+    drop_pending_updates: bool = args.drop_pending_updates
 
     (
         telegram_token,
@@ -49,6 +51,7 @@ def main():
         repostitory,
         group_whitelist,
         group_blacklist,
+        drop_pending_updates,
     )
     rpb.run()
 

@@ -23,6 +23,13 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
   - If you're upgrading to v0.6.0, check the migration guide to get your existing data into the database.
 - Add the bot to your group and enjoy your oasis of original content!
 
+## RepostBot CLI arguments
+| Argument                          | Effect                                                                         |
+|-----------------------------------|--------------------------------------------------------------------------------|
+| -c --config <path-to-config-file> | Attempts to use yaml config file at path                                       |
+| -e --env                          | Use environment variables/.env file to set Telegram bot API token and admin ID |
+| -d --drop-pending-updates         | Ignore pending updates when bot is first start up                              |
+
 # If you don't want to run your own:
 
 - Simply add [@REEEEPost Bot](https://telegram.me/reeeepost_bot) to your group! My own configuration may not be to your liking, however.
