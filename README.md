@@ -9,7 +9,7 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 
 - Create a bot by talking to [@BotFather](https://telegram.me/botfather) on Telegram.
 - Use BotFather to turn off privacy mode -- this is required since RepostBot needs to check messages as they come in.
-- Ensure you have at least Python 3.8 installed on your computer.
+- Ensure you have at least Python 3.12 installed on your computer.
 - Clone the repo from GitHub and install the dependencies:\
   `git clone https://github.com/sglowery/Telegram-Repost-Bot.git <FOLDER_NAME>`\
   `cd <FOLDER_NAME>`\
@@ -19,7 +19,16 @@ If someone posts unoriginal content, they will be called out and, ideally, be ve
 - Run Repost Bot with the command `python main.py -c CONFIG_FILE_PATH`
   - If you want to use environment variables to set the Telegram API token and the admin ID, run the above command with `-e` as well. This will be handy if you want to run this on a service like Heroku.
     - Set the Telegram token and, optionally, your user id in the `.env.example` file and save a new file with `.example` removed.
+- Initialize the database with `python repostbot/db/init_db.py`. Confirm that `rebostdb.sqlite` was created and resides in the same folder as `main.py`. 
+  - If you're upgrading to v0.6.0, check the migration guide to get your existing data into the database.
 - Add the bot to your group and enjoy your oasis of original content!
+
+## RepostBot CLI arguments
+| Argument                          | Effect                                                                         |
+|-----------------------------------|--------------------------------------------------------------------------------|
+| -c --config <path-to-config-file> | Attempts to use yaml config file at path                                       |
+| -e --env                          | Use environment variables/.env file to set Telegram bot API token and admin ID |
+| -d --drop-pending-updates         | Ignore pending updates when bot is first start up                              |
 
 # If you don't want to run your own:
 

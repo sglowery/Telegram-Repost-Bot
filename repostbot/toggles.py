@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum, unique
-from typing import List, Dict, Iterable
+from typing import ItemsView
 
 
 @unique
@@ -29,7 +29,7 @@ _TOGGLE_STRING_KEYS = {
 
 class Toggles:
 
-    def __init__(self, toggles_dict: Dict[str, bool]):
+    def __init__(self, toggles_dict: dict[str, bool]):
         self._toggles_dict = toggles_dict
 
     @property
@@ -48,19 +48,23 @@ class Toggles:
     def auto_delete(self) -> bool:
         return self._toggles_dict.get(ToggleType.AUTODELETE.value)
 
-    def as_dict(self) -> Dict[str, bool]:
+    def as_dict(self) -> dict[str, bool]:
         return {member.value: self[member] for _, member in ToggleType.__members__.items()}
 
-    def __getitem__(self, item: ToggleType) -> bool:
-        return self._toggles_dict[item.value]
+    def __getitem__(self, item: ToggleType | str) -> bool:
+        match item:
+            case str():
+                return self._toggles_dict[item]
+            case ToggleType():
+                return self._toggles_dict[item.value]
 
     def __setitem__(self, key: ToggleType, value: bool) -> None:
         self._toggles_dict[key.value] = value
 
     @staticmethod
-    def get_toggle_args() -> Iterable[str, str]:
+    def get_toggle_args() -> ItemsView[ToggleType, str]:
         return {member: member.value for _, member in ToggleType.__members__.items()}.items()
 
     @staticmethod
-    def get_toggle_display_name(toggle: ToggleType, strings: Dict[str, str or List[str]]) -> str:
+    def get_toggle_display_name(toggle: ToggleType, strings: dict[str, str | list[str]]) -> str:
         return strings[_TOGGLE_STRING_KEYS[toggle]]

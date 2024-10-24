@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List, Optional
+from typing import Any
 
 import yaml
 from dotenv import dotenv_values
@@ -18,27 +18,38 @@ class NoConfigFileAvailableException(Exception):
     pass
 
 
-def _ensure_proper_config_structure(data: dict):
+class MutuallyExclusiveParametersException(Exception):
+    pass
+
+
+def _ensure_proper_config_structure(data: dict[str, Any]):
     top_level = [
         "repost_data_path",
         "bot_admin_id",
         "bot_token",
         "hash_size",
-        "repost_callout_timeout",
+        "flood_protection_timeout",
         "callout_style",
         "default_toggles",
-        "strings"
+        "strings",
+        "group_whitelist",
+        "group_blacklist",
     ]
-    toggles = ["url", "picture", "auto_callout", "auto_delete"]
+    toggles = ["url", "picture", "autocallout", "autodelete"]
     strings = [
         "private_chat",
         "private_chat_toggle",
         "help_command",
         "settings_command_response",
-        "true",
-        "false",
+        "enabled",
+        "disabled",
+        "settings_track_pictures",
+        "settings_track_urls",
+        "settings_auto_callout",
+        "settings_auto_delete",
         "invalid_whitelist_reply",
-        "removed_from_whitelist",
+        "removed_from_whitelist_reply",
+        "added_and_removed_from_whitelist_reply",
         "successful_whitelist_reply",
         "group_repost_reset_initial_prompt",
         "group_reset_yes",
@@ -48,6 +59,8 @@ def _ensure_proper_config_structure(data: dict):
         "group_repost_reset_cancel",
         "group_repost_data_reset",
         "stats_command_reply",
+        "blacklisted_response",
+        "not_in_whitelist_response",
     ]
     for repost_strategy in get_all_callout_strategies():
         strings.extend(repost_strategy.get_required_strings())
@@ -62,7 +75,7 @@ def _ensure_proper_config_structure(data: dict):
     _check_config_fields(data.get("strings"), strings, "strings")
 
 
-def _check_config_fields(data: Optional[dict], strings: List[str], field_type: str):
+def _check_config_fields(data: dict[str, Any], strings: list[str], field_type: str):
     if data is None:
         logger.warning(f"Data is missing for {field_type}")
         return
@@ -77,7 +90,7 @@ def get_config_variables(config_path: str) -> tuple:
 
     if config_path is not None:
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config_data = yaml.safe_load(f)
         except (FileNotFoundError, TypeError) as e:
             logger.warning(f"{e.strerror} -- could not find '{config_path}'")
@@ -96,10 +109,12 @@ def get_config_variables(config_path: str) -> tuple:
     default_bot_strings = dict()
     default_bot_admin_id = None
     default_strategy = None
-    default_repost_callout_timeout = None
+    default_flood_protection_timeout = None
     default_hash_size = None
     default_repost_data_path = None
     default_default_toggles = None
+    default_group_whitelist = None
+    default_group_blacklist = None
 
     if default_config_data is not None:
         logger.info("testing default config file for all required fields")
@@ -108,19 +123,23 @@ def get_config_variables(config_path: str) -> tuple:
         default_bot_strings = default_config_data.get("strings", {})
         default_bot_admin_id = default_config_data.get("bot_admin_id", None)
         default_strategy = default_config_data.get("callout_style", get_default_strategy())
-        default_repost_callout_timeout = default_config_data.get("repost_callout_timeout", None)
+        default_flood_protection_timeout = default_config_data.get("flood_protection_timeout", None)
         default_hash_size = default_config_data.get("hash_size", None)
         default_repost_data_path = default_config_data.get("repost_data_path", None)
         default_default_toggles = default_config_data.get("default_toggles", None)
+        default_group_whitelist = default_config_data.get("group_whitelist", [])
+        default_group_blacklist = default_config_data.get("group_blacklist", [])
 
     telegram_token = default_telegram_token
     bot_strings = default_bot_strings
     bot_admin_id = default_bot_admin_id
     strategy = default_strategy
-    repost_callout_timeout = default_repost_callout_timeout
+    flood_protection_timeout = default_flood_protection_timeout
     hash_size = default_hash_size
     repost_data_path = default_repost_data_path
     default_toggles = default_default_toggles
+    group_whitelist = default_group_whitelist
+    group_blacklist = default_group_blacklist
 
     if config_path is not None and config_data is not None:
         logger.info("testing user config file for all required fields")
@@ -129,18 +148,22 @@ def get_config_variables(config_path: str) -> tuple:
         bot_strings = {**default_bot_strings, **config_data.get("strings", {})}
         bot_admin_id = config_data.get("bot_admin_id", default_bot_admin_id)
         strategy = config_data.get("callout_style", default_strategy)
-        repost_callout_timeout = config_data.get("repost_callout_timeout", default_repost_callout_timeout)
+        flood_protection_timeout = config_data.get("flood_protection_timeout", default_flood_protection_timeout)
         hash_size = config_data.get("hash_size", default_hash_size)
         repost_data_path = config_data.get("repost_data_path", default_repost_data_path)
         default_toggles = config_data.get("default_toggles", default_default_toggles)
+        group_whitelist = config_data.get("group_whitelist", default_group_whitelist)
+        group_blacklist = config_data.get("group_blacklist", default_group_blacklist)
 
     bot_variables = (
         bot_strings,
         strategy,
-        repost_callout_timeout,
+        flood_protection_timeout,
         hash_size,
         repost_data_path,
-        default_toggles
+        default_toggles,
+        group_whitelist,
+        group_blacklist,
     )
     if any(var is None for var in bot_variables):
         raise MissingConfigParameterException("Missing required config parameters between default and user config files. Cannot proceed.")
@@ -148,15 +171,20 @@ def get_config_variables(config_path: str) -> tuple:
     if any(var is None for var in [telegram_token, bot_admin_id]):
         logger.warning("Missing Telegram token and bot admin ID; if using environment variables, this is fine.")
 
+    if (len(group_whitelist) > 0) and (len(group_blacklist) > 0):
+        raise MutuallyExclusiveParametersException("Whitelist and blacklist both have values defined. You can only use one list or neither of them.")
+
     return (
         telegram_token,
         bot_strings,
         bot_admin_id,
         strategy,
-        repost_callout_timeout,
+        flood_protection_timeout,
         hash_size,
         repost_data_path,
-        default_toggles
+        default_toggles,
+        group_whitelist,
+        group_blacklist,
     )
 
 

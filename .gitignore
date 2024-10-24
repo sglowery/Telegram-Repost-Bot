@@ -1,10 +1,13 @@
-groups/
+group_settings/
 .git/
 __pycache__/
 .idea/
 tests/
 /venv/
+/venv310/
 
 config/config.yaml
+config.yaml
+repostdb.sqlite
 .env
 TODO.txt
