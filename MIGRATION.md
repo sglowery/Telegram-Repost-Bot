@@ -1,5 +1,7 @@
 # Migration Guide
 
+You must go through all the migrations, e.g. if your version was 0.3.0, you must migrate to 0.5.0, init the database, then migrate to 0.6.0
+
 ## \>=0.5.0 to 0.6.0
 
 ### What changed?
@@ -8,7 +10,7 @@
 
 Open a terminal at the project root. Use your venv's python.exe:
 
-`venv/scripts/python.exe repostbot/db/init_db.py`
+`venv/scripts/python.exe scripts/init_db.py`
 
 This will create the database. Then, migrate your group data to the database and the new JSON format:
 

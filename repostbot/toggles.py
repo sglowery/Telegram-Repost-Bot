@@ -48,6 +48,9 @@ class Toggles:
     def auto_delete(self) -> bool:
         return self._toggles_dict.get(ToggleType.AUTODELETE.value)
 
+    def merged(self, other: Toggles) -> Toggles:
+        return Toggles({**other._toggles_dict, **self._toggles_dict})
+
     def as_dict(self) -> dict[str, bool]:
         return {member.value: self[member] for _, member in ToggleType.__members__.items()}
 

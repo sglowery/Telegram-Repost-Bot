@@ -55,6 +55,8 @@ if __name__ == '__main__':
             with open(file_path) as f:
                 group_data = json.load(f)
             group_data["toggles"] = {**group_data["track"]}
+            group_data["toggles"]["auto_callout"] = True
+            group_data["toggles"]["auto_delete"] = False
             group_data["deleted"] = []
             del group_data["track"]
             with open(file_path, 'w') as f:

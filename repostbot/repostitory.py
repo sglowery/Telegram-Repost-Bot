@@ -114,7 +114,7 @@ class Repostitory:
         DeletedMessagesDAO.remove_all_deleted_message_records_for_group(group_id)
 
     def get_toggles_data(self, group_id: int) -> Toggles:
-        return self.get_group_data_json(group_id).toggles
+        return self.get_group_data_json(group_id).toggles.merged(Toggles(self.default_toggles))
 
     def save_toggles_data(self, group_id: int, toggles: Toggles):
         group_data = self.get_group_data_json(group_id)

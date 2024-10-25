@@ -2,63 +2,81 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.1] - 2024-10-23
-
-### Updated
-
-- MIGRATION instructions for migration to database
-
-### Fixed
-
-- Database migration script deleting data even if SQL error occurs. Now only deletes data if no errors happen during the process
-
-## [0.6.0] - 2024-10-23
+## [Unreleased]
 
 ### Added
 
-- Script to migrate group reposts, whitelists and deleted messages to database
-  - This script also removes those sections from the json files to save disk space
-- New string response for calling /whitelist command on message that contains multiple entities which have mixed whitelist status
-- Whitelist and blacklist functionality, and a /help command response to tell users if their group is banned from or not allowed to be used with the bot
-- Use -d or --drop-pending-updates argument to drop any updates pending before it's started up
+- Group ID included in whitelist/blacklist response.
+- Additional logging
 
 ### Changed
 
-- Use database for repost tracking, whitelist and deleted messages
-- Default group settings folder changed to `/group_settings`
-- Downloading images is concurrent
-- No longer possible to have duplicate values in whitelist or deleted lists in group data
-- Updated /help response to include new data stored
-- Update dependencies
-  - ImageHash to 4.3.1
-  - python-telegram-bot to 20.8
-  - python-dotenv to 1.0.1
-  - Pillow to 10.2.0
-  - ujson to 5.9.0
+- Moved database initiation file to scripts folder.
+- Clarify migration process in migration document.
 
 ### Fixed
 
-- URLs in image captions are now tracked
-- Fixed outdated start-up config field and string checks
-- Fixed outdated /help response text
+- Fix 0.5.0 migration script not adding new toggleable options to group settings json.
+- Fix toggles returning None if using incomplete settings files.
+- Remove spaces at start of help text in defaultconfig.yaml.
+
+## [0.6.1] - 2024-10-23
+
+### Changed
+
+- MIGRATION instructions for migration to database.
+
+### Fixed
+
+- Database migration script deleting data even if SQL error occurs. Now only deletes data if no errors happen during the process.
+
+## [0.6.0] - 2024-10-23 [YANKED]
+
+### Added
+
+- Script to migrate group reposts, whitelists and deleted messages to database.
+  - This script also removes those sections from the json files to save disk space.
+- New string response for calling /whitelist command on message that contains multiple entities which have mixed whitelist status.
+- Whitelist and blacklist functionality, and a /help command response to tell users if their group is banned from or not allowed to be used with the bot.
+- Use -d or --drop-pending-updates argument to drop any updates pending before it's started up.
+
+### Changed
+
+- Use database for repost tracking, whitelist and deleted messages.
+- Default group settings folder changed to `/group_settings`.
+- Downloading images is concurrent.
+- No longer possible to have duplicate values in whitelist or deleted lists in group data.
+- Updated /help response to include new data stored.
+- Update dependencies.
+  - ImageHash to 4.3.1.
+  - python-telegram-bot to 20.8.
+  - python-dotenv to 1.0.1.
+  - Pillow to 10.2.0.
+  - ujson to 5.9.0.
+
+### Fixed
+
+- URLs in image captions are now tracked.
+- Fixed outdated start-up config field and string checks.
+- Fixed outdated /help response text.
 
 ## [0.5.0] - 2022-07-04
 
 ### Added
 
-- Auto-delete reposts, toggleable with `/toggle autodelete`
-- Auto call out reposts, toggleable with `/toggle autocallout`
-- Remove more strings from code and put into config file
-- Made script to migrate group data files from <=0.4.0 to 0.5.0 format
+- Auto-delete reposts, toggleable with `/toggle autodelete`.
+- Auto call out reposts, toggleable with `/toggle autocallout`.
+- Remove more strings from code and put into config file.
+- Made script to migrate group data files from <=0.4.0 to 0.5.0 format.
 
 ### Changed
 
-- Use ujson library to try and help with performance
-- Revert interaction of URL and picture tracking settings and repost processing
-  - When toggled off, messages containing those entities will not be acknowledged at all
+- Use ujson library to try and help with performance.
+- Revert interaction of URL and picture tracking settings and repost processing.
+  - When toggled off, messages containing those entities will not be acknowledged at all.
 
 ### Fixed
 
@@ -68,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Update Pillow to 9.2.0
+- Update Pillow to 9.2.0.
 
 ## [0.4.0] - 2021-11-20
 
@@ -100,7 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admins posting anonymously will be referred to as "Anonymous Admin".
   - Anonymous admins also have ability to reset RepostBot data.
 - Update dependencies.
-- Update README commands and installation instructions
+- Update README commands and installation instructions.
 
 ## [0.3.1] - 2021-06-22
 

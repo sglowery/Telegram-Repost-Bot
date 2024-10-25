@@ -38,13 +38,13 @@ strings:
   private_chat_toggle: "I don't track reposts in private chats."
 
   help_command: "I'm {name}. I analyze the pictures and URLs you send and call people out when they send something that's been sent before.
-   \nI store the message ID, hashed versions of the URLs and pictures you send, the user ID of the sender and the ID of the group it was sent in. GIFs and videos are not tracked.
-   \n\n/toggle [url | picture | autocallout | autodelete] - Toggle various settings for Repost Bot. Untoggling tracking of URLs and pictures means they will not be logged or acknowledged. Multiple options can be toggled at a time.
-   \n/settings - Display Repost Bot settings for this group.
-   \n/whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.
-   \n/reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets toggles to default settings. This can't be undone.
-   \n/stats - Display number of unique images and URLs I have seen, and how many reposts of each. Note that the first time it is seen is not counted as a repost.
-   \n\nFlood protection is on a per-user-per-command basis, including calling out reposts. I will still track posts when being flooded, but will not call them out."
+\nI store the message ID, hashed versions of the URLs and pictures you send, the user ID of the sender and the ID of the group it was sent in. GIFs and videos are not tracked.
+\n\n/toggle [url | picture | autocallout | autodelete] - Toggle various settings for Repost Bot. Untoggling tracking of URLs and pictures means they will not be logged or acknowledged. Multiple options can be toggled at a time.
+\n/settings - Display Repost Bot settings for this group.
+\n/whitelist - Use this command while replying to the message containing a specific URL or picture you want to whitelist. Whitelisted items will still be logged, but I won't call reposts of it out.
+\n/reset - Only group admins and the bot admin can call this command. Deletes all repost and whitelist data, resets toggles to default settings. This can't be undone.
+\n/stats - Display number of unique images and URLs I have seen, and how many reposts of each. Note that the first time it is seen is not counted as a repost.
+\n\nFlood protection is on a per-user-per-command basis, including calling out reposts. I will still track posts when being flooded, but will not call them out."
 
   settings_command_response: "RepostBot toggleable settings:"
   enabled: "Enabled"
@@ -115,7 +115,7 @@ strings:
   ]
 
   # what the bot should say when blacklisted groups attempt to use it
-  blacklisted_response: "This group has been banned from using this bot."
+  blacklisted_response: "This group has been banned from using this bot. Contact the bot admin with this number {number} to be removed from the blacklist."
 
   # what the bot should say when non-whitelisted groups attempt to use it
-  not_in_whitelist_response: "This group is not allowed to use this bot."
+  not_in_whitelist_response: "This group is not allowed to use this bot. Contact the bot admin with this number {number} to be added to the whitelist."
