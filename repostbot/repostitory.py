@@ -118,7 +118,7 @@ class Repostitory:
 
     def save_toggles_data(self, group_id: int, toggles: Toggles):
         group_data = self.get_group_data_json(group_id)
-        current_toggles = group_data.toggles
+        current_toggles = group_data.toggles.merged(Toggles(self.default_toggles))
         new_toggles = {**current_toggles.as_dict(), **toggles.as_dict()}
         group_data.toggles = new_toggles
         self.save_group_data(group_id, group_data)

@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix 0.5.0 migration script not adding new toggleable options to group settings json.
 - Fix toggles returning None if using incomplete settings files.
 - Remove spaces at start of help text in defaultconfig.yaml.
+- Can now toggle options that don't yet exist in group's settings file
+  - Settings file is updated to include all settings
 
 ## [0.6.1] - 2024-10-23
 
