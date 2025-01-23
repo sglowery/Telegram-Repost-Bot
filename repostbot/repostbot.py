@@ -220,12 +220,13 @@ class RepostBot:
         bot_name = context.bot.first_name
         group_id = params.group_id
         group_filter_response = None
-        if (len(self.group_whitelist) > 0) and group_id not in self.group_whitelist:
-            group_filter_response = self.strings["not_in_whitelist_response"]
-            logger.info(f"Help command called from non-whitelisted group {group_id}")
-        elif group_id in self.group_blacklist:
-            group_filter_response = self.strings["blacklisted_response"]
-            logger.info(f"Help command called from blacklisted group {group_id}")
+        if params.effective_message.chat.type != Chat.PRIVATE:
+            if (len(self.group_whitelist) > 0) and group_id not in self.group_whitelist:
+                group_filter_response = self.strings["not_in_whitelist_response"]
+                logger.info(f"Help command called from non-whitelisted group {group_id}")
+            elif group_id in self.group_blacklist:
+                group_filter_response = self.strings["blacklisted_response"]
+                logger.info(f"Help command called from blacklisted group {group_id}")
 
         if group_filter_response:
             await params.effective_message.reply_text(group_filter_response.format(number=group_id))
